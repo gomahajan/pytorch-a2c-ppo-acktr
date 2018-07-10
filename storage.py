@@ -48,6 +48,9 @@ class RolloutStorage(object):
         self.states[0].copy_(self.states[-1])
         self.masks[0].copy_(self.masks[-1])
 
+    def value(self):
+        return self.returns.max()
+
     def compute_returns(self, next_value, use_gae, gamma, tau):
         if use_gae:
             self.value_preds[-1] = next_value
