@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import matplotlib.pyplot as plt
 
 from arguments import get_args
 from baselines.common.vec_env.dummy_vec_env import DummyVecEnv
@@ -17,6 +18,7 @@ from baselines.common.vec_env.vec_normalize import VecNormalize
 from envs import make_env
 from model import Policy
 from storage import RolloutStorage
+from buffer import RolloutQueue
 from visualize import visdom_plot
 
 import algo
@@ -49,6 +51,7 @@ def main():
 
     torch.set_num_threads(1)
 
+    plot_values = []
     if args.vis:
         from visdom import Visdom
         viz = Visdom(port=args.port)
@@ -92,7 +95,8 @@ def main():
         agent = algo.A2C_ACKTR(actor_critic, args.value_loss_coef,
                                args.entropy_coef, acktr=True)
 
-    rollouts = RolloutStorage(args.num_steps, args.num_processes, obs_shape, envs.action_space, actor_critic.state_size)
+    #rollouts = RolloutStorage(args.num_steps, args.num_processes, obs_shape, envs.action_space, actor_critic.state_size)
+    rolloutsQueue = RolloutQueue()
     current_obs = torch.zeros(args.num_processes, *obs_shape)
 
     def update_current_obs(obs):
@@ -105,7 +109,13 @@ def main():
     obs = envs.reset()
     update_current_obs(obs)
 
-    rollouts.observations[0].copy_(current_obs)
+    #rollouts.observations[0].copy_(current_obs)
+
+    for i in range(0,args.buffer_size):
+        rollouts = RolloutStorage(args.num_steps, args.num_processes, obs_shape, envs.action_space,
+                                  actor_critic.state_size)
+        rollouts.observations[0].copy_(current_obs)
+        rolloutsQueue.insert(rollouts)
 
     # These variables are used to compute average rewards for all processes.
     episode_rewards = torch.zeros([args.num_processes, 1])
@@ -117,6 +127,7 @@ def main():
 
     start = time.time()
     for j in range(num_updates):
+        rollouts = rolloutsQueue.pop()
         for step in range(args.num_steps):
             # Sample actions
             with torch.no_grad():
@@ -155,7 +166,9 @@ def main():
 
         rollouts.compute_returns(next_value, args.use_gae, args.gamma, args.tau)
 
-        value_loss, action_loss, dist_entropy = agent.update(rollouts)
+        #EDIT: Instead of using just current rollouts, use all rollouts from the queue
+
+        value_loss, action_loss, dist_entropy = agent.update(rolloutsQueue)
 
         rollouts.after_update()
 
@@ -187,6 +200,10 @@ def main():
                        final_rewards.min(),
                        final_rewards.max(), dist_entropy,
                        value_loss, action_loss))
+
+            #EDIT
+            plot_values.append(final_rewards.mean().item())
+            np.save("values", plot_values)
         if args.vis and j % args.vis_interval == 0:
             try:
                 # Sometimes monitor doesn't properly flush the outputs
