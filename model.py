@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from distributions import Categorical, DiagGaussian
 from utils import init, init_normc_
 
+isFactored = False
 
 class Flatten(nn.Module):
     def forward(self, x):
@@ -22,6 +23,11 @@ class Policy(nn.Module):
         else:
             raise NotImplementedError
 
+        #START: HACK
+        if isFactored:
+            self.base = FactoredMLPBase(obs_shape[0])
+        #END: HACK
+
         if action_space.__class__.__name__ == "Discrete":
             num_outputs = action_space.n
             self.dist = Categorical(self.base.output_size, num_outputs)
@@ -37,7 +43,7 @@ class Policy(nn.Module):
         raise NotImplementedError
 
     def act(self, inputs, states, masks, deterministic=False):
-        value, actor_features, states = self.base(inputs, states, masks)
+        value, actor_features, states, choice_log_prob = self.base(inputs, states, masks)
         dist = self.dist(actor_features)
 
         if deterministic:
@@ -45,20 +51,20 @@ class Policy(nn.Module):
         else:
             action = dist.sample()
 
-        action_log_probs = dist.log_probs(action)
+        action_log_probs = dist.log_probs(action) + choice_log_prob
         dist_entropy = dist.entropy().mean()
 
         return value, action, action_log_probs, states
 
     def get_value(self, inputs, states, masks):
-        value, _, _ = self.base(inputs, states, masks)
+        value, _, _, _ = self.base(inputs, states, masks)
         return value
 
     def evaluate_actions(self, inputs, states, masks, action):
-        value, actor_features, states = self.base(inputs, states, masks)
+        value, actor_features, states, choice_log_prob = self.base(inputs, states, masks)
         dist = self.dist(actor_features)
 
-        action_log_probs = dist.log_probs(action)
+        action_log_probs =  dist.log_probs(action) + choice_log_prob
         dist_entropy = dist.entropy().mean()
 
         return value, action_log_probs, dist_entropy, states
@@ -141,6 +147,10 @@ class MLPBase(nn.Module):
             init_(nn.Linear(num_inputs, 64)),
             nn.Tanh(),
             init_(nn.Linear(64, 64)),
+            #nn.Tanh(),
+            #init_(nn.Linear(64, 64)),
+            #nn.Tanh(),
+            #init_(nn.Linear(64, 64)),
             nn.Tanh()
         )
 
@@ -167,4 +177,64 @@ class MLPBase(nn.Module):
         hidden_critic = self.critic(inputs)
         hidden_actor = self.actor(inputs)
 
-        return self.critic_linear(hidden_critic), hidden_actor, states
+        return self.critic_linear(hidden_critic), hidden_actor, states, torch.Tensor([0])
+
+class FactoredMLPBase(nn.Module):
+    def __init__(self, num_inputs):
+        super(FactoredMLPBase, self).__init__()
+        self.num_actors = 2
+
+        init_ = lambda m: init(m,
+              init_normc_,
+              lambda x: nn.init.constant_(x, 0))
+
+        self.ddist = Categorical(self.output_size, self.num_actors)
+
+        self.decider = nn.Sequential(
+                init_(nn.Linear(num_inputs, 64)),
+                nn.Tanh(),
+                init_(nn.Linear(64, 64)),
+                nn.Tanh()
+            )
+        self.actors = []
+
+        for i in range(0,self.num_actors):
+            self.actors.append(nn.Sequential(
+                init_(nn.Linear(num_inputs, 64)),
+                nn.Tanh(),
+                init_(nn.Linear(64, 64)),
+                nn.Tanh()
+            ))
+
+        self.critic = nn.Sequential(
+            init_(nn.Linear(num_inputs, 64)),
+            nn.Tanh(),
+            init_(nn.Linear(64, 64)),
+            nn.Tanh()
+        )
+
+        self.critic_linear = init_(nn.Linear(64, 1))
+
+        self.train()
+
+    @property
+    def state_size(self):
+        return 1
+
+    @property
+    def output_size(self):
+        return 64
+
+    def forward(self, inputs, states, masks):
+        hidden_critic = self.critic(inputs)
+        hidden_decision = self.decider(inputs)
+        ddist = self.ddist(hidden_decision)
+        choice = ddist.sample()
+
+        choice_log_probs = ddist.log_probs(choice)
+        hidden_actor = torch.empty(choice.shape[0], self.output_size)
+
+        for i in range(0, inputs.shape[0]):
+            hidden_actor[i] = self.actors[choice[i]](inputs[i])
+
+        return self.critic_linear(hidden_critic), hidden_actor, states, choice_log_probs
