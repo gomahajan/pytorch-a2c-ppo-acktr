@@ -4,7 +4,8 @@ import torch.nn.functional as F
 from distributions import Categorical, DiagGaussian
 from utils import init, init_normc_
 
-isFactored = False
+isFactored = True
+total_actors = 1
 
 class Flatten(nn.Module):
     def forward(self, x):
@@ -43,31 +44,43 @@ class Policy(nn.Module):
         raise NotImplementedError
 
     def act(self, inputs, states, masks, deterministic=False):
-        value, actor_features, states, choice_log_prob = self.base(inputs, states, masks)
-        dist = self.dist(actor_features)
+        value, actors, states, _, choice, choice_log_prob = self.base(inputs, states, masks)
+        hidden_actor = torch.empty(choice.shape[0], self.base.output_size)
+
+        for i in range(0, inputs.shape[0]):
+            hidden_actor[i] = actors[choice[i]](inputs[i])
+
+        dist = self.dist(hidden_actor)
 
         if deterministic:
             action = dist.mode()
         else:
             action = dist.sample()
 
-        action_log_probs = dist.log_probs(action) + choice_log_prob
+        action_log_probs = dist.log_probs(action)
         dist_entropy = dist.entropy().mean()
 
-        return value, action, action_log_probs, states
+        return value, action, choice, action_log_probs, choice_log_prob, states
 
     def get_value(self, inputs, states, masks):
-        value, _, _, _ = self.base(inputs, states, masks)
+        value, _, _, _, _, _ = self.base(inputs, states, masks)
         return value
 
-    def evaluate_actions(self, inputs, states, masks, action):
-        value, actor_features, states, choice_log_prob = self.base(inputs, states, masks)
-        dist = self.dist(actor_features)
+    def evaluate_actions(self, inputs, states, masks, action, choice):
+        value, actors, states, ddist, _, _ = self.base(inputs, states, masks)
 
-        action_log_probs =  dist.log_probs(action) + choice_log_prob
+        hidden_actor = torch.empty(choice.shape[0], self.base.output_size)
+
+        for i in range(0, inputs.shape[0]):
+            hidden_actor[i] = actors[choice[i]](inputs[i])
+
+        dist = self.dist(hidden_actor)
+        action_log_probs = dist.log_probs(action)
+
+        choice_log_probs = ddist.log_probs(choice)
         dist_entropy = dist.entropy().mean()
 
-        return value, action_log_probs, dist_entropy, states
+        return value, action_log_probs, choice_log_probs, dist_entropy, states
 
 
 class CNNBase(nn.Module):
@@ -147,10 +160,10 @@ class MLPBase(nn.Module):
             init_(nn.Linear(num_inputs, 64)),
             nn.Tanh(),
             init_(nn.Linear(64, 64)),
-            #nn.Tanh(),
-            #init_(nn.Linear(64, 64)),
-            #nn.Tanh(),
-            #init_(nn.Linear(64, 64)),
+            nn.Tanh(),
+            init_(nn.Linear(64, 64)),
+            nn.Tanh(),
+            init_(nn.Linear(64, 64)),
             nn.Tanh()
         )
 
@@ -182,7 +195,7 @@ class MLPBase(nn.Module):
 class FactoredMLPBase(nn.Module):
     def __init__(self, num_inputs):
         super(FactoredMLPBase, self).__init__()
-        self.num_actors = 2
+        self.num_actors = total_actors
 
         init_ = lambda m: init(m,
               init_normc_,
@@ -232,9 +245,5 @@ class FactoredMLPBase(nn.Module):
         choice = ddist.sample()
 
         choice_log_probs = ddist.log_probs(choice)
-        hidden_actor = torch.empty(choice.shape[0], self.output_size)
 
-        for i in range(0, inputs.shape[0]):
-            hidden_actor[i] = self.actors[choice[i]](inputs[i])
-
-        return self.critic_linear(hidden_critic), hidden_actor, states, choice_log_probs
+        return self.critic_linear(hidden_critic), self.actors, states, ddist, choice, choice_log_probs

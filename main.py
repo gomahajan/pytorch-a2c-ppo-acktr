@@ -120,7 +120,7 @@ def main():
         for step in range(args.num_steps):
             # Sample actions
             with torch.no_grad():
-                value, action, action_log_prob, states = actor_critic.act(
+                value, action, choice, action_log_prob, choice_log_prob, states = actor_critic.act(
                         rollouts.observations[step],
                         rollouts.states[step],
                         rollouts.masks[step])
@@ -146,7 +146,7 @@ def main():
                 current_obs *= masks
 
             update_current_obs(obs)
-            rollouts.insert(current_obs, states, action, action_log_prob, value, reward, masks)
+            rollouts.insert(current_obs, states, action, choice, action_log_prob, choice_log_prob, value, reward, masks)
 
         with torch.no_grad():
             next_value = actor_critic.get_value(rollouts.observations[-1],
