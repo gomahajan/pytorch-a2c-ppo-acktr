@@ -5,7 +5,7 @@ from distributions import Categorical, DiagGaussian
 from utils import init, init_normc_
 
 isFactored = True
-total_actors = 1
+total_actors = 2
 
 class Flatten(nn.Module):
     def forward(self, x):
@@ -160,10 +160,6 @@ class MLPBase(nn.Module):
             init_(nn.Linear(num_inputs, 64)),
             nn.Tanh(),
             init_(nn.Linear(64, 64)),
-            nn.Tanh(),
-            init_(nn.Linear(64, 64)),
-            nn.Tanh(),
-            init_(nn.Linear(64, 64)),
             nn.Tanh()
         )
 
@@ -214,9 +210,9 @@ class FactoredMLPBase(nn.Module):
         for i in range(0,self.num_actors):
             self.actors.append(nn.Sequential(
                 init_(nn.Linear(num_inputs, 64)),
-                nn.Tanh(),
-                init_(nn.Linear(64, 64)),
-                nn.Tanh()
+                #nn.Tanh(),
+                #init_(nn.Linear(64, 64)),
+                #nn.Tanh()
             ))
 
         self.critic = nn.Sequential(

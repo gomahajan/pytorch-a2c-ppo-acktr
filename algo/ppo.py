@@ -48,20 +48,23 @@ class PPO(object):
                     advantages, self.num_mini_batch)
 
             for sample in data_generator:
-                observations_batch, states_batch, actions_batch, \
-                   return_batch, masks_batch, old_action_log_probs_batch, \
+                observations_batch, states_batch, actions_batch, choices_batch, \
+                   return_batch, masks_batch, old_action_log_probs_batch, old_choice_log_probs_batch, \
                         adv_targ = sample
 
                 # Reshape to do in a single forward pass for all steps
-                values, action_log_probs, dist_entropy, states = self.actor_critic.evaluate_actions(
+                values, action_log_probs, choice_log_probs, dist_entropy, states = self.actor_critic.evaluate_actions(
                     observations_batch, states_batch,
-                    masks_batch, actions_batch)
+                    masks_batch, actions_batch, choices_batch)
 
-                ratio = torch.exp(action_log_probs - old_action_log_probs_batch)
-                surr1 = ratio * adv_targ
-                surr2 = torch.clamp(ratio, 1.0 - self.clip_param,
-                                           1.0 + self.clip_param) * adv_targ
-                action_loss = -torch.min(surr1, surr2).mean()
+                ratio_action = torch.exp(action_log_probs - old_action_log_probs_batch)
+                ratio_choice = torch.exp(choice_log_probs - old_choice_log_probs_batch)
+                surr1 = ratio_action * ratio_choice * adv_targ
+                surr2 = torch.clamp(ratio_action, 1.0 - self.clip_param,
+                                           1.0 + self.clip_param) * ratio_choice * adv_targ
+                surr3 = torch.clamp(ratio_choice, 1.0 - self.clip_param,
+                                    1.0 + self.clip_param) * ratio_action * adv_targ
+                action_loss = -torch.min(torch.min(surr1, surr2), surr3).mean()
 
                 value_loss = F.mse_loss(return_batch, values)
 
