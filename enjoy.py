@@ -78,11 +78,13 @@ if args.env_name.find('Bullet') > -1:
 
 while True:
     with torch.no_grad():
-        value, action, _, states = actor_critic.act(current_obs,
+        value, action, choice, _, choice_log_probs, states = actor_critic.act(current_obs,
                                                     states,
                                                     masks,
                                                     deterministic=True)
     cpu_actions = action.squeeze(1).cpu().numpy()
+    #print("Actions: {} for choice {}".format(action, choice))
+    print("Choice {} with probability {}".format(choice, torch.exp(choice_log_probs)))
     # Obser reward and next obs
     obs, reward, done, _ = env.step(cpu_actions)
 
