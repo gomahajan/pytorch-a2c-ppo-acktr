@@ -39,8 +39,11 @@ try:
     os.makedirs(args.log_dir)
 except OSError:
     files = glob.glob(os.path.join(args.log_dir, '*.monitor.csv'))
-    for f in files:
-        os.remove(f)
+    print("#######")
+    print("WARNING: Deleting all files")
+    print("#######")
+    #for f in files:
+    #   os.remove(f)
 
 
 def main():
@@ -69,7 +72,7 @@ def main():
     obs_shape = envs.observation_space.shape
     obs_shape = (obs_shape[0] * args.num_stack, *obs_shape[1:])
 
-    actor_critic = Policy(obs_shape, envs.action_space, args.recurrent_policy)
+    actor_critic = Policy(obs_shape, envs.action_space, args.recurrent_policy, args.num_actors)
 
     if envs.action_space.__class__.__name__ == "Discrete":
         action_shape = 1

@@ -4,16 +4,13 @@ import torch.nn.functional as F
 from distributions import Categorical, DiagGaussian
 from utils import init, init_normc_
 
-isFactored = True
-total_actors = 6
-
 class Flatten(nn.Module):
     def forward(self, x):
         return x.view(x.size(0), -1)
 
 
 class Policy(nn.Module):
-    def __init__(self, obs_shape, action_space, recurrent_policy):
+    def __init__(self, obs_shape, action_space, recurrent_policy, num_actors):
         super(Policy, self).__init__()
         if len(obs_shape) == 3:
             self.base = CNNBase(obs_shape[0], recurrent_policy)
@@ -25,8 +22,7 @@ class Policy(nn.Module):
             raise NotImplementedError
 
         #START: HACK
-        if isFactored:
-            self.base = FactoredMLPBase(obs_shape[0])
+        self.base = FactoredMLPBase(obs_shape[0], num_actors)
         #END: HACK
 
         if action_space.__class__.__name__ == "Discrete":
@@ -189,9 +185,9 @@ class MLPBase(nn.Module):
         return self.critic_linear(hidden_critic), hidden_actor, states, torch.Tensor([0])
 
 class FactoredMLPBase(nn.Module):
-    def __init__(self, num_inputs):
+    def __init__(self, num_inputs, num_actors):
         super(FactoredMLPBase, self).__init__()
-        self.num_actors = total_actors
+        self.num_actors = num_actors
 
         init_ = lambda m: init(m,
               init_normc_,

@@ -1,6 +1,8 @@
 import argparse
 
 import torch
+import time
+
 
 
 def get_args():
@@ -63,9 +65,12 @@ def get_args():
                         help='disables visdom visualization')
     parser.add_argument('--port', type=int, default=8097,
                         help='port to run the server on (default: 8097)')
+    parser.add_argument('--num-actors', type=int, default=3,
+                        help='number of linear sub policies (default: 3)')
     args = parser.parse_args()
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()
     args.vis = not args.no_vis
+    args.log_dir = args.log_dir + "{}/{}/{}-{}-".format(args.algo, args.env_name, args.num_actors, time.strftime("%Y%m%d-%H%M%S"))
 
     return args
