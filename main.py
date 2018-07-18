@@ -45,6 +45,7 @@ except OSError:
     #for f in files:
     #   os.remove(f)
 
+args.log_dir = args.log_dir + "{}-{}-".format(args.num_actors, time.strftime("%Y%m%d-%H%M%S"))
 
 def main():
     print("#######")
