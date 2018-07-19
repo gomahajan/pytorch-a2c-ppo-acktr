@@ -38,8 +38,10 @@ try:
     os.makedirs(args.log_dir)
 except OSError:
     files = glob.glob(os.path.join(args.log_dir, '*.monitor.csv'))
-    for f in files:
-        os.remove(f)
+    #for f in files:
+    #    os.remove(f)
+
+args.log_dir = args.log_dir + "{}-".format(time.strftime("%Y%m%d-%H%M%S"))
 
 
 def main():
