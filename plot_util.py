@@ -100,38 +100,47 @@ color_defaults = [
 
 
 def plot(files, bin_size=100, smooth=1):
-    fig = plt.figure()
-
     tys = []
+    otx = None
+    max_v = 0
     for file in files:
         tx, ty = load_data(file, smooth, bin_size)
         if tx is None or ty is None:
             continue
+        if len(tx) > max_v:
+            otx = tx
+            max_v = len(tx)
         tys.append(ty)
 
+    max_v = max_v // 2
     y = np.zeros([len(tys), len(max(tys, key=lambda x: len(x)))])
     for i, j in enumerate(tys):
         y[i][0:len(j)] = j
 
+    y = np.delete(y, [i for i in range(max_v, y.shape[1])], axis=1)
+    otx = otx[:][0:max_v]
     mean = np.mean(y, axis=0)
     sd = np.std(y, axis=0)
     cis = (mean - sd, mean + sd)
 
-    return tx, mean, cis
+    return otx, mean, cis
 
 
 if __name__ == "__main__":
     game = "Walker2d-v2"
     algo = "ppo"
-    num_steps = 2000000
-    infiles = glob.glob('./graphs/{}/{}/3'.format(algo, game) + '*.monitor.csv')
-    tx, mean, cis = plot(infiles, smooth=1)
-    plt.fill_between(tx, cis[0], cis[1], color='#17becf', alpha=0.5)
-    plt.plot(tx, mean, label="{}".format(algo))
+    num_steps = 1000000
+    fig = plt.figure()
+    nums = [1,2,3,4,6]
+
+    for num in nums:
+        infiles = glob.glob('./graphs/{}/{}/{}'.format(algo, game, num) + '*.monitor.csv')
+        if len(infiles) > 0:
+            tx, mean, cis = plot(infiles, smooth=1)
+            plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+            plt.plot(tx, mean, label="{} with {} actor(s)".format(algo, num))
 
     tick_fractions = np.array([0.0, 0.25, 0.5, 0.75, 1.0])
-    # tick_fractions = np.arange(0.0, 2.0, 0.2)
-    # tick_fractions[0] = 0.1
     ticks = tick_fractions * num_steps
     tick_names = ["{:.1e}".format(tick) for tick in ticks]
     plt.xticks(ticks, tick_names)
