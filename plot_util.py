@@ -10,6 +10,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import medfilt
+
 matplotlib.rcParams.update({'font.size': 8})
 
 
@@ -19,7 +20,7 @@ def smooth_reward_curve(x, y):
     k = halfwidth
     xsmoo = x[k:-k]
     ysmoo = np.convolve(y, np.ones(2 * k + 1), mode='valid') / \
-        np.convolve(np.ones_like(y), np.ones(2 * k + 1), mode='valid')
+            np.convolve(np.ones_like(y), np.ones(2 * k + 1), mode='valid')
     downsample = max(int(np.floor(len(xsmoo) / 1e3)), 1)
     return xsmoo[::downsample], ysmoo[::downsample]
 
@@ -41,7 +42,7 @@ def fix_point(x, y, interval):
 
         if pointer + 1 < len(x):
             alpha = (y[pointer + 1] - y[pointer]) / \
-                (x[pointer + 1] - x[pointer])
+                    (x[pointer + 1] - x[pointer])
             tmpy = y[pointer] + alpha * (tmpx - x[pointer])
             fx.append(tmpx)
             fy.append(tmpy)
@@ -95,7 +96,7 @@ color_defaults = [
     '#e377c2',  # raspberry yogurt pink
     '#7f7f7f',  # middle gray
     '#bcbd22',  # curry yellow-green
-    '#17becf'   # blue-teal
+    '#17becf'  # blue-teal
 ]
 
 
@@ -131,7 +132,7 @@ if __name__ == "__main__":
     algo = "ppo"
     num_steps = 1000000
     fig = plt.figure()
-    nums = [1,2,3,4,6]
+    nums = [1, 2, 3, 4, 6]
 
     for num in nums:
         infiles = glob.glob('./graphs/{}/{}/{}'.format(algo, game, num) + '*.monitor.csv')
@@ -140,13 +141,14 @@ if __name__ == "__main__":
             plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
             plt.plot(tx, mean, label="{} with {} actor(s)".format(algo, num))
 
-    tick_fractions = np.array([0.0, 0.25, 0.5, 0.75, 1.0])
+    tick_fractions = np.array([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
     ticks = tick_fractions * num_steps
-    tick_names = ["{:.1e}".format(tick) for tick in ticks]
+    #tick_names = ["{:.1e}".format(tick) for tick in ticks]
+    tick_names = ["{}".format(tick) for tick in tick_fractions]
     plt.xticks(ticks, tick_names)
     plt.xlim(0, num_steps * 1.01)
 
-    plt.xlabel('Number of Timesteps')
+    plt.xlabel('Number of Timesteps (M)')
     plt.ylabel('Rewards')
 
     plt.title(game)
