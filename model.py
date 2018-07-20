@@ -138,10 +138,7 @@ class MLPBase(nn.Module):
               lambda x: nn.init.constant_(x, 0))
 
         self.actor = nn.Sequential(
-            init_(nn.Linear(num_inputs, 64)),
-            #nn.Tanh(),
-            #init_(nn.Linear(64, 64)),
-            #nn.Tanh()
+            init_(nn.Linear(num_inputs, 64))
         )
 
         self.critic = nn.Sequential(
