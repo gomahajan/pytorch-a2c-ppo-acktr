@@ -75,6 +75,7 @@ def load_data(indir, smooth, bin_size):
         return [None, None]
 
     x, y = np.array(result)[:, 0], np.array(result)[:, 1]
+    #plt.scatter(x, y, alpha=0.2, s=2)
 
     if smooth == 1:
         x, y = smooth_reward_curve(x, y)
@@ -100,7 +101,7 @@ color_defaults = [
 ]
 
 
-def plot(files, bin_size=100, smooth=1):
+def plot(files, bin_size=100, smooth=1, split=True):
     tys = []
     otx = None
     max_v = 0
@@ -113,13 +114,15 @@ def plot(files, bin_size=100, smooth=1):
             max_v = len(tx)
         tys.append(ty)
 
-    max_v = max_v // 2
     y = np.zeros([len(tys), len(max(tys, key=lambda x: len(x)))])
     for i, j in enumerate(tys):
         y[i][0:len(j)] = j
 
-    y = np.delete(y, [i for i in range(max_v, y.shape[1])], axis=1)
-    otx = otx[:][0:max_v]
+    if split:
+        max_v = max_v // 2
+        y = np.delete(y, [i for i in range(max_v, y.shape[1])], axis=1)
+        otx = otx[:][0:max_v]
+
     mean = np.mean(y, axis=0)
     sd = np.std(y, axis=0)
     cis = (mean - sd, mean + sd)
@@ -130,21 +133,34 @@ def plot(files, bin_size=100, smooth=1):
 if __name__ == "__main__":
     game = "Walker2d-v2"
     algo = "ppo"
-    num_steps = 1000000
+    num_steps = 2000000
     fig = plt.figure()
-    nums = [1, 2, 3, 4, 6]
+    nums = [1, 2, 3, 6]
+    #nums = [1]
 
     for num in nums:
         infiles = glob.glob('./graphs/{}/{}/{}'.format(algo, game, num) + '*.monitor.csv')
         if len(infiles) > 0:
-            tx, mean, cis = plot(infiles, smooth=1)
+            tx, mean, cis = plot(infiles, smooth=1, split=False)
             plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
             plt.plot(tx, mean, label="{} with {} actor(s)".format(algo, num))
 
+    #infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/base/graphs/{}/{}/2'.format(algo, game) + '*.monitor.csv')
+    #if len(infiles) > 0:
+    #    tx, mean, cis = plot(infiles, smooth=1, split=False)
+    #    plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+    #    plt.plot(tx, mean, label="{} with non-learn policy".format(algo))
+
+    #infiles = glob.glob('/tmp/openai-2018-07-19-13-09-23-129882/' + '*.monitor.csv')
+    #if len(infiles) > 0:
+    #    tx, mean, cis = plot(infiles, smooth=1, split=False)
+    #    plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+    #    plt.plot(tx, mean, label="{} with tensorflow linear policy".format(algo))
+
     tick_fractions = np.array([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
     ticks = tick_fractions * num_steps
-    #tick_names = ["{:.1e}".format(tick) for tick in ticks]
-    tick_names = ["{}".format(tick) for tick in tick_fractions]
+    tick_names = ["{:.1e}".format(tick) for tick in ticks]
+    #tick_names = ["{}".format(tick) for tick in tick_fractions]
     plt.xticks(ticks, tick_names)
     plt.xlim(0, num_steps * 1.01)
 
