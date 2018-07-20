@@ -75,7 +75,6 @@ def load_data(indir, smooth, bin_size):
         return [None, None]
 
     x, y = np.array(result)[:, 0], np.array(result)[:, 1]
-    #plt.scatter(x, y, alpha=0.2, s=2)
 
     if smooth == 1:
         x, y = smooth_reward_curve(x, y)
@@ -135,21 +134,24 @@ if __name__ == "__main__":
     algo = "ppo"
     num_steps = 2000000
     fig = plt.figure()
-    nums = [1, 2, 3, 6]
-    #nums = [1]
+    num = 3
 
-    for num in nums:
-        infiles = glob.glob('./graphs/{}/{}/{}'.format(algo, game, num) + '*.monitor.csv')
-        if len(infiles) > 0:
-            tx, mean, cis = plot(infiles, smooth=1, split=False)
-            plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
-            plt.plot(tx, mean, label="{} with {} actor(s)".format(algo, num))
+    infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/linear/graphs/{}/{}/'.format(algo, game) + '*.monitor.csv')
+    tx, mean, cis = plot(infiles, smooth=1, split=False)
+    plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+    plt.plot(tx, mean, label="{} with linear policy".format(algo))
 
-    #infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/base/graphs/{}/{}/2'.format(algo, game) + '*.monitor.csv')
-    #if len(infiles) > 0:
-    #    tx, mean, cis = plot(infiles, smooth=1, split=False)
-    #    plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
-    #    plt.plot(tx, mean, label="{} with non-learn policy".format(algo))
+    infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/nlinear/graphs/{}/{}/'.format(algo, game) + '*.monitor.csv')
+    if len(infiles) > 0:
+        tx, mean, cis = plot(infiles, smooth=1, split=False)
+        plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+        plt.plot(tx, mean, label="{} with non-learn policy".format(algo))
+
+    infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/fcn/graphs/{}/{}/'.format(algo, game) + '*.monitor.csv')
+    if len(infiles) > 0:
+        tx, mean, cis = plot(infiles, smooth=1, split=False)
+        plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+        plt.plot(tx, mean, label="{} with fcn policy using 3 actors".format(algo))
 
     #infiles = glob.glob('/tmp/openai-2018-07-19-13-09-23-129882/' + '*.monitor.csv')
     #if len(infiles) > 0:
