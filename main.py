@@ -41,8 +41,7 @@ except OSError:
     #for f in files:
     #    os.remove(f)
 
-args.log_dir = args.log_dir + "{}-".format(time.strftime("%Y%m%d-%H%M%S"))
-
+args.log_dir = args.log_dir + "{}-{}-".format(time.strftime("%Y%m%d-%H%M%S"), args.uid)
 
 def main():
     print("#######")
