@@ -203,8 +203,7 @@ class FactoredMLPBase(nn.Module):
 
         for i in range(0,self.num_actors):
             self.actors.append(nn.Sequential(
-                init_(nn.Linear(num_inputs, 64)),
-                init_(nn.Linear(64, 64))
+                init_(nn.Linear(num_inputs, 64))
             ))
 
         self.critic = nn.Sequential(
