@@ -30,7 +30,10 @@ env = make_env(args.env_name, args.seed, 0, None, args.add_timestep)
 env = DummyVecEnv([env])
 
 actor_critic, ob_rms = \
-            torch.load(os.path.join(args.load_dir, args.env_name + ".pt"))
+            torch.load(os.path.join(args.load_dir, "Walker2d-v2" + ".pt"))
+
+actor_critic2, ob_rms = \
+            torch.load(os.path.join(args.load_dir, "Walker2d-v2-2" + ".pt"))
 
 
 if len(env.observation_space.shape) == 1:
@@ -82,11 +85,26 @@ while True:
                                                     states,
                                                     masks,
                                                     deterministic=True)
+        value, action2, choice2, _, choice_log_probs2, states = actor_critic2.act(current_obs,
+                                                                              states,
+                                                                              masks,
+                                                                              deterministic=True)
+
     cpu_actions = action.squeeze(1).cpu().numpy()
+    cpu_actions = action.squeeze(1).cpu().numpy()
+    cpu_actions2 = action2.squeeze(1).cpu().numpy()
+    # rint("action1 {}".format(cpu_actions))
+    # print("action2 {}".format(cpu_actions2))
+    cpu_actions_combined = [[0, 0, 0, 0, 0, 0]]
+    cpu_actions_combined[0][0:2] = cpu_actions[0]
+    cpu_actions_combined[0][3:5] = cpu_actions2[0]
+    cpu_actions_combined = cpu_actions_combined[0][0:6]
+    cpu_actions_combined = [cpu_actions_combined]
     #print("Actions: {} for choice {}".format(action, choice))
     print("Choice {} with probability {}".format(choice, torch.exp(choice_log_probs)))
+    print("Choice2 {} with probability {}".format(choice2, torch.exp(choice_log_probs2)))
     # Obser reward and next obs
-    obs, reward, done, _ = env.step(cpu_actions)
+    obs, reward, done, _ = env.step(cpu_actions_combined)
 
     masks.fill_(0.0 if done else 1.0)
 

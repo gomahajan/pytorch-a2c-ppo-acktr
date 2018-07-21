@@ -74,11 +74,12 @@ def main():
     obs_shape = (obs_shape[0] * args.num_stack, *obs_shape[1:])
 
     actor_critic = Policy(obs_shape, envs.action_space, args.recurrent_policy, args.num_actors)
+    actor_critic2 = Policy(obs_shape, envs.action_space, args.recurrent_policy, args.num_actors)
 
     if envs.action_space.__class__.__name__ == "Discrete":
         action_shape = 1
     else:
-        action_shape = envs.action_space.shape[0]
+        action_shape = envs.action_space.shape[0]/2
 
     if args.cuda:
         actor_critic.cuda()
@@ -93,11 +94,16 @@ def main():
                          args.value_loss_coef, args.entropy_coef, lr=args.lr,
                                eps=args.eps,
                                max_grad_norm=args.max_grad_norm)
+        agent2 = algo.PPO(actor_critic2, args.clip_param, args.ppo_epoch, args.num_mini_batch,
+                         args.value_loss_coef, args.entropy_coef, lr=args.lr,
+                         eps=args.eps,
+                         max_grad_norm=args.max_grad_norm)
     elif args.algo == 'acktr':
         agent = algo.A2C_ACKTR(actor_critic, args.value_loss_coef,
                                args.entropy_coef, acktr=True)
 
     rollouts = RolloutStorage(args.num_steps, args.num_processes, obs_shape, envs.action_space, actor_critic.state_size)
+    rollouts2 = RolloutStorage(args.num_steps, args.num_processes, obs_shape, envs.action_space, actor_critic.state_size)
     current_obs = torch.zeros(args.num_processes, *obs_shape)
 
     def update_current_obs(obs):
@@ -111,6 +117,7 @@ def main():
     update_current_obs(obs)
 
     rollouts.observations[0].copy_(current_obs)
+    rollouts2.observations[0].copy_(current_obs)
 
     # These variables are used to compute average rewards for all processes.
     episode_rewards = torch.zeros([args.num_processes, 1])
@@ -129,10 +136,22 @@ def main():
                         rollouts.observations[step],
                         rollouts.states[step],
                         rollouts.masks[step])
+                value2, action2, choice2, action_log_prob2, choice_log_prob2, states2 = actor_critic2.act(
+                    rollouts2.observations[step],
+                    rollouts2.states[step],
+                    rollouts2.masks[step])
             cpu_actions = action.squeeze(1).cpu().numpy()
-
+            cpu_actions2 = action2.squeeze(1).cpu().numpy()
+            #rint("action1 {}".format(cpu_actions))
+            #print("action2 {}".format(cpu_actions2))
+            cpu_actions_combined = [[0,0,0,0,0,0]]
+            cpu_actions_combined[0][0:2] = cpu_actions[0]
+            cpu_actions_combined[0][3:5] = cpu_actions2[0]
+            cpu_actions_combined = cpu_actions_combined[0][0:6]
+            cpu_actions_combined = [cpu_actions_combined]
+            #print("combined {}".format(cpu_actions_combined))
             # Obser reward and next obs
-            obs, reward, done, info = envs.step(cpu_actions)
+            obs, reward, done, info = envs.step(cpu_actions_combined)
             reward = torch.from_numpy(np.expand_dims(np.stack(reward), 1)).float()
             episode_rewards += reward
 
@@ -152,17 +171,24 @@ def main():
 
             update_current_obs(obs)
             rollouts.insert(current_obs, states, action, choice, action_log_prob, choice_log_prob, value, reward, masks)
+            rollouts2.insert(current_obs, states2, action2, choice2, action_log_prob2, choice_log_prob2, value2, reward, masks)
 
         with torch.no_grad():
             next_value = actor_critic.get_value(rollouts.observations[-1],
                                                 rollouts.states[-1],
                                                 rollouts.masks[-1]).detach()
+            next_value2 = actor_critic2.get_value(rollouts2.observations[-1],
+                                                rollouts2.states[-1],
+                                                rollouts2.masks[-1]).detach()
 
         rollouts.compute_returns(next_value, args.use_gae, args.gamma, args.tau)
+        rollouts2.compute_returns(next_value2, args.use_gae, args.gamma, args.tau)
 
         value_loss, action_loss, dist_entropy = agent.update(rollouts)
+        value_loss2, action_loss2, dist_entropy2 = agent2.update(rollouts2)
 
         rollouts.after_update()
+        rollouts2.after_update()
 
         if j % args.save_interval == 0 and args.save_dir != "":
             save_path = os.path.join(args.save_dir, args.algo)
@@ -173,13 +199,17 @@ def main():
 
             # A really ugly way to save a model to CPU
             save_model = actor_critic
+            save_model2 = actor_critic2
             if args.cuda:
                 save_model = copy.deepcopy(actor_critic).cpu()
 
             save_model = [save_model,
                             hasattr(envs, 'ob_rms') and envs.ob_rms or None]
+            save_model2 = [save_model2,
+                          hasattr(envs, 'ob_rms') and envs.ob_rms or None]
 
             torch.save(save_model, os.path.join(save_path, args.env_name + ".pt"))
+            torch.save(save_model2, os.path.join(save_path, "Walker2d-v2-2" + ".pt"))
 
         if j % args.log_interval == 0:
             end = time.time()

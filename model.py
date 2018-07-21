@@ -29,7 +29,7 @@ class Policy(nn.Module):
             num_outputs = action_space.n
             self.dist = Categorical(self.base.output_size, num_outputs)
         elif action_space.__class__.__name__ == "Box":
-            num_outputs = action_space.shape[0]
+            num_outputs = action_space.shape[0]//2
             self.dist = DiagGaussian(self.base.output_size, num_outputs)
         else:
             raise NotImplementedError
@@ -197,18 +197,14 @@ class FactoredMLPBase(nn.Module):
 
         self.decider = nn.Sequential(
                 init_(nn.Linear(num_inputs, 64)),
-                #nn.Tanh(),
-                init_(nn.Linear(64, 64)),
-                #nn.Tanh()
+                init_(nn.Linear(64, 64))
             )
         self.actors = []
 
         for i in range(0,self.num_actors):
             self.actors.append(nn.Sequential(
                 init_(nn.Linear(num_inputs, 64)),
-                #nn.Tanh(),
-                #init_(nn.Linear(64, 64)),
-                #nn.Tanh()
+                init_(nn.Linear(64, 64))
             ))
 
         self.critic = nn.Sequential(
