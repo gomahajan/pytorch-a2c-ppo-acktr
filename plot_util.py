@@ -103,24 +103,25 @@ color_defaults = [
 def plot(files, bin_size=100, smooth=1, split=True):
     tys = []
     otx = None
-    max_v = 0
+    min_v = 100000000
     for file in files:
         tx, ty = load_data(file, smooth, bin_size)
         if tx is None or ty is None:
             continue
-        if len(tx) > max_v:
+        if len(tx) <= min_v:
             otx = tx
-            max_v = len(tx)
+            min_v = len(tx)
         tys.append(ty)
 
-    y = np.zeros([len(tys), len(max(tys, key=lambda x: len(x)))])
+    l = len(min(tys, key=lambda x: len(x)))
+    y = np.zeros([len(tys), l])
     for i, j in enumerate(tys):
-        y[i][0:len(j)] = j
+        y[i][0:l] = j[0:l]
 
     if split:
-        max_v = max_v // 2
-        y = np.delete(y, [i for i in range(max_v, y.shape[1])], axis=1)
-        otx = otx[:][0:max_v]
+        min_v = min_v // 2
+        y = np.delete(y, [i for i in range(min_v, y.shape[1])], axis=1)
+        otx = otx[:][0:min_v]
 
     mean = np.mean(y, axis=0)
     sd = np.std(y, axis=0)
@@ -136,22 +137,24 @@ if __name__ == "__main__":
     fig = plt.figure()
     num = 3
 
-    infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/linear/graphs/{}/{}/'.format(algo, game) + '*.monitor.csv')
+    infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/linear/graphs/{}/{}/'.format(algo, game) + '*-0.monitor.csv')
     tx, mean, cis = plot(infiles, smooth=1, split=False)
     plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
     plt.plot(tx, mean, label="{} with linear policy".format(algo))
 
-    infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/nlinear/graphs/{}/{}/'.format(algo, game) + '*.monitor.csv')
+    infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/nlinear/graphs/{}/{}/'.format(algo, game) + '*-0.monitor.csv')
     if len(infiles) > 0:
         tx, mean, cis = plot(infiles, smooth=1, split=False)
         plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
         plt.plot(tx, mean, label="{} with non-learn policy".format(algo))
 
-    infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/fcn/graphs/{}/{}/'.format(algo, game) + '*.monitor.csv')
-    if len(infiles) > 0:
-        tx, mean, cis = plot(infiles, smooth=1, split=False)
-        plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
-        plt.plot(tx, mean, label="{} with fcn policy using 3 actors".format(algo))
+    nums = [2,3,4,5]
+    for num in nums:
+        infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/fcn/graphs/{}/{}/{}'.format(algo, game, num) + '*-0.monitor.csv')
+        if len(infiles) > 0:
+            tx, mean, cis = plot(infiles, smooth=1, split=False)
+            plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+            plt.plot(tx, mean, label="{} with fcn policy using {} actors".format(algo, num))
 
     #infiles = glob.glob('/tmp/openai-2018-07-19-13-09-23-129882/' + '*.monitor.csv')
     #if len(infiles) > 0:
