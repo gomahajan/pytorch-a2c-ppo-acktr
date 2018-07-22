@@ -101,8 +101,6 @@ while True:
     cpu_actions_combined = cpu_actions_combined[0][0:6]
     cpu_actions_combined = [cpu_actions_combined]
     #print("Actions: {} for choice {}".format(action, choice))
-    print("Choice {} with probability {}".format(choice, torch.exp(choice_log_probs)))
-    print("Choice2 {} with probability {}".format(choice2, torch.exp(choice_log_probs2)))
     # Obser reward and next obs
     obs, reward, done, _ = env.step(cpu_actions_combined)
 
