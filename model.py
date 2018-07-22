@@ -23,6 +23,8 @@ class Policy(nn.Module):
 
         #START: HACK
         self.base = FactoredMLPBase(obs_shape[0], num_actors)
+        self.ddist = Categorical(self.base.output_size, self.base.num_actors)
+        self.ddist2 = Categorical(self.base.output_size, self.base.num_actors)
         #END: HACK
 
         if action_space.__class__.__name__ == "Discrete":
@@ -40,11 +42,19 @@ class Policy(nn.Module):
         raise NotImplementedError
 
     def act(self, inputs, states, masks, deterministic=False):
-        value, actors, states, ddist, choice, choice_log_prob = self.base(inputs, states, masks)
+        value, states, hidden_decision, hidden_decision2 = self.base(inputs, states, masks)
+        ddist = self.ddist(hidden_decision)
+        choice = ddist.sample()
+        choice_log_prob = ddist.log_probs(choice)
+
+        ddist2 = self.ddist2(hidden_decision2)
+        choice2 = ddist2.sample()
+        choice_log_prob2 = ddist2.log_probs(choice2)
+
         hidden_actor = torch.empty(choice.shape[0], self.base.output_size)
 
         for i in range(0, inputs.shape[0]):
-            hidden_actor[i] = actors[choice[i]](inputs[i])
+            hidden_actor[i] = self.base.actors[choice[i]](inputs[i]) + self.base.actors2[choice2[i]](inputs[i])
 
         dist = self.dist(hidden_actor)
 
@@ -56,27 +66,31 @@ class Policy(nn.Module):
         action_log_probs = dist.log_probs(action)
         dist_entropy = dist.entropy().mean() + ddist.entropy().mean()
 
-        return value, action, choice, action_log_probs, choice_log_prob, states
+        return value, action, (choice, choice2), action_log_probs, (choice_log_prob, choice_log_prob2), states
 
     def get_value(self, inputs, states, masks):
-        value, _, _, _, _, _ = self.base(inputs, states, masks)
+        value, _, _, _ = self.base(inputs, states, masks)
         return value
 
-    def evaluate_actions(self, inputs, states, masks, action, choice):
-        value, actors, states, ddist, _, _ = self.base(inputs, states, masks)
-
-        hidden_actor = torch.empty(choice.shape[0], self.base.output_size)
+    def evaluate_actions(self, inputs, states, masks, action, choicetuple):
+        value, states, hidden_decision, hidden_decision2 = self.base(inputs, states, masks)
+        ddist = self.ddist(hidden_decision)
+        ddist2 = self.ddist2(hidden_decision2)
+        choice, choice2 = choicetuple
+        hidden_actor = torch.empty(inputs.shape[0], self.base.output_size)
 
         for i in range(0, inputs.shape[0]):
-            hidden_actor[i] = actors[choice[i]](inputs[i])
+            hidden_actor[i] = self.base.actors[choice[i]](inputs[i]) + self.base.actors2[choice2[i]](inputs[i])
 
         dist = self.dist(hidden_actor)
         action_log_probs = dist.log_probs(action)
 
         choice_log_probs = ddist.log_probs(choice)
-        dist_entropy = dist.entropy().mean() + ddist.entropy().mean()
 
-        return value, action_log_probs, choice_log_probs, dist_entropy, states
+        dist_entropy = dist.entropy().mean() + ddist.entropy().mean()
+        choice_log_probs2 = ddist2.log_probs(choice2)
+
+        return value, action_log_probs, (choice_log_probs, choice_log_probs2), dist_entropy, states
 
 
 class CNNBase(nn.Module):
@@ -193,18 +207,31 @@ class FactoredMLPBase(nn.Module):
               init_normc_,
               lambda x: nn.init.constant_(x, 0))
 
-        self.ddist = Categorical(self.output_size, self.num_actors)
-
         self.decider = nn.Sequential(
                 init_(nn.Linear(num_inputs, 64)),
                 nn.Tanh(),
                 init_(nn.Linear(64, 64)),
                 nn.Tanh()
         )
+
+        self.decider2 = nn.Sequential(
+            init_(nn.Linear(num_inputs, 64)),
+            nn.Tanh(),
+            init_(nn.Linear(64, 64)),
+            nn.Tanh()
+        )
+
         self.actors = []
 
         for i in range(0,self.num_actors):
             self.actors.append(nn.Sequential(
+                init_(nn.Linear(num_inputs, 64))
+            ))
+
+        self.actors2 = []
+
+        for i in range(0, self.num_actors):
+            self.actors2.append(nn.Sequential(
                 init_(nn.Linear(num_inputs, 64))
             ))
 
@@ -230,9 +257,6 @@ class FactoredMLPBase(nn.Module):
     def forward(self, inputs, states, masks):
         hidden_critic = self.critic(inputs)
         hidden_decision = self.decider(inputs)
-        ddist = self.ddist(hidden_decision)
-        choice = ddist.sample()
+        hidden_decision2 = self.decider2(inputs)
 
-        choice_log_probs = ddist.log_probs(choice)
-
-        return self.critic_linear(hidden_critic), self.actors, states, ddist, choice, choice_log_probs
+        return self.critic_linear(hidden_critic), states, hidden_decision, hidden_decision2
