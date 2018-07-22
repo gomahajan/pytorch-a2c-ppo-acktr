@@ -197,9 +197,7 @@ class FactoredMLPBase(nn.Module):
 
         self.decider = nn.Sequential(
                 init_(nn.Linear(num_inputs, 64)),
-                nn.Tanh(),
                 init_(nn.Linear(64, 64)),
-                nn.Tanh()
         )
         self.actors = []
 
