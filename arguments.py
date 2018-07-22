@@ -67,6 +67,8 @@ def get_args():
                         help='port to run the server on (default: 8097)')
     parser.add_argument('--num-actors', type=int, default=3,
                         help='number of linear sub policies (default: 3)')
+    parser.add_argument('--uid', type=int, default=1,
+                        help='number of linear sub policies (default: 3)')
     args = parser.parse_args()
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()

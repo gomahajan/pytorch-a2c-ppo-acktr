@@ -124,7 +124,7 @@ def plot(files, bin_size=100, smooth=1, split=True):
         otx = otx[:][0:min_v]
 
     mean = np.mean(y, axis=0)
-    sd = np.std(y, axis=0)
+    sd = 0.4*np.std(y, axis=0)
     cis = (mean - sd, mean + sd)
 
     return otx, mean, cis
@@ -138,30 +138,45 @@ if __name__ == "__main__":
     num = 3
 
     infiles = glob.glob('./graphs/{}/{}/'.format(algo, game) + '*43-0.monitor.csv')
-    tx, mean, cis = plot(infiles, smooth=1, split=False)
-    plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
-    plt.plot(tx, mean, label="{} with fcn 2 policy".format(algo))
+    if len(infiles) > 0:
+        tx, mean, cis = plot(infiles, smooth=1, split=False)
+        plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+        plt.plot(tx, mean, label="{} with fcn 2 policy".format(algo))
 
-    #infiles = glob.glob('./graphs/{}/{}/'.format(algo, game) + '*[35]-0.monitor.csv')
+    #infiles = glob.glob('./graphs/{}/{}/'.format(algo, game) + '*33-0.monitor.csv')
     #tx, mean, cis = plot(infiles, smooth=1, split=False)
     #plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
-    #plt.plot(tx, mean, label="{} with fcn 2 policy l".format(algo))
+    #plt.plot(tx, mean, label="{} with fcn 2 policy last".format(algo))
 
-    infiles = glob.glob('./graphs/{}/{}/'.format(algo, game) + '*4-0.monitor.csv')
-    tx, mean, cis = plot(infiles, smooth=1, split=False)
-    plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
-    plt.plot(tx, mean, label="{} with fcn 2 policy last".format(algo))
+    infiles = glob.glob('./graphs/{}/{}/'.format(algo, game) + '*-[12345]-0.monitor.csv')
+    if len(infiles) > 0:
+        tx, mean, cis = plot(infiles, smooth=1, split=False)
+        plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+        plt.plot(tx, mean, label="{} with fcn 2 policy random".format(algo))
 
-    #infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/nlinear/graphs/{}/{}/'.format(algo, game) + '*-0.monitor.csv')
-    #tx, mean, cis = plot(infiles, smooth=1, split=False)
-    #plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
-    #plt.plot(tx, mean, label="{} with nlinear policy".format(algo))
+    infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/fcn/graphs/{}/{}/'.format(algo, game) + '*-0.monitor.csv')
+    if len(infiles) > 0:
+        tx, mean, cis = plot(infiles, smooth=1, split=False)
+        plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+        plt.plot(tx, mean, label="{} with fcn policy".format(algo))
 
-    infiles = glob.glob(
-        '/home/gaurav/PycharmProjects/Atari35/fcn/graphs/{}/{}/'.format(algo, game) + '*-0.monitor.csv')
-    tx, mean, cis = plot(infiles, smooth=1, split=False)
-    plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
-    plt.plot(tx, mean, label="{} with fcn policy".format(algo))
+    infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/nlinear/graphs/{}/{}/'.format(algo, game) + '*-0.monitor.csv')
+    if len(infiles) > 0:
+        tx, mean, cis = plot(infiles, smooth=1, split=False)
+        plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+        plt.plot(tx, mean, label="{} with non-linear policy".format(algo))
+
+    infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/linear/graphs/{}/{}/'.format(algo, game) + '*-0.monitor.csv')
+    if len(infiles) > 0:
+        tx, mean, cis = plot(infiles, smooth=1, split=False)
+        plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+        plt.plot(tx, mean, label="{} with linear policy".format(algo))
+
+    infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/scn/graphs/{}/{}/'.format(algo, game) + '*-0.monitor.csv')
+    if len(infiles) > 0:
+        tx, mean, cis = plot(infiles, smooth=1, split=False)
+        plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+        plt.plot(tx, mean, label="{} with scn policy".format(algo))
 
     #infiles = glob.glob('/tmp/openai-2018-07-19-13-09-23-129882/' + '*.monitor.csv')
     #if len(infiles) > 0:
