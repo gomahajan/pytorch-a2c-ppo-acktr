@@ -64,7 +64,10 @@ class PPO(object):
                                            1.0 + self.clip_param) * ratio_choice * adv_targ
                 surr3 = torch.clamp(ratio_choice, 1.0 - self.clip_param,
                                     1.0 + self.clip_param) * ratio_action * adv_targ
-                action_loss = -torch.min(torch.min(surr1, surr2), surr3).mean()
+                surr4 = torch.clamp(ratio_choice, 1.0 - self.clip_param,
+                                    1.0 + self.clip_param) * torch.clamp(ratio_action, 1.0 - self.clip_param,
+                                    1.0 + self.clip_param) * adv_targ
+                action_loss = -torch.min(torch.min(torch.min(surr1, surr2), surr3), surr4).mean()
 
                 value_loss = F.mse_loss(return_batch, values)
 

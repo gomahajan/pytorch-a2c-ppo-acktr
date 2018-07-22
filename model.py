@@ -40,7 +40,7 @@ class Policy(nn.Module):
         raise NotImplementedError
 
     def act(self, inputs, states, masks, deterministic=False):
-        value, actors, states, _, choice, choice_log_prob = self.base(inputs, states, masks)
+        value, actors, states, ddist, choice, choice_log_prob = self.base(inputs, states, masks)
         hidden_actor = torch.empty(choice.shape[0], self.base.output_size)
 
         for i in range(0, inputs.shape[0]):
@@ -54,7 +54,7 @@ class Policy(nn.Module):
             action = dist.sample()
 
         action_log_probs = dist.log_probs(action)
-        dist_entropy = dist.entropy().mean()
+        dist_entropy = dist.entropy().mean() + ddist.entropy().mean()
 
         return value, action, choice, action_log_probs, choice_log_prob, states
 
@@ -74,7 +74,7 @@ class Policy(nn.Module):
         action_log_probs = dist.log_probs(action)
 
         choice_log_probs = ddist.log_probs(choice)
-        dist_entropy = dist.entropy().mean()
+        dist_entropy = dist.entropy().mean() + ddist.entropy().mean()
 
         return value, action_log_probs, choice_log_probs, dist_entropy, states
 
@@ -196,8 +196,11 @@ class FactoredMLPBase(nn.Module):
         self.ddist = Categorical(self.output_size, self.num_actors)
 
         self.decider = nn.Sequential(
-                init_(nn.Linear(num_inputs, 64))
-            )
+                init_(nn.Linear(num_inputs, 64)),
+                nn.Tanh(),
+                init_(nn.Linear(64, 64)),
+                nn.Tanh()
+        )
         self.actors = []
 
         for i in range(0,self.num_actors):
