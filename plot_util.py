@@ -130,76 +130,79 @@ def plot(files, bin_size=100, smooth=1, split=True):
     return otx, mean, cis
 
 
+def linear(algo, game, plt):
+    infiles = glob.glob('/home/gaurav/mode/linear/graphs/{}/{}/'.format(algo,game)+'*-0.monitor.csv')
+    tx, mean, cis = plot(infiles, smooth=1, split=False)
+    plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+    plt.plot(tx, mean, label="{} with linear policy".format(algo))
+
+def nlinear(algo, game, plt):
+    infiles = glob.glob('/home/gaurav/mode/nlinear/graphs/{}/{}/'.format(algo,game)+'*-0.monitor.csv')
+    tx, mean, cis = plot(infiles, smooth=1, split=False)
+    plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+    plt.plot(tx, mean, label="{} with nlinear policy".format(algo))
+
 if __name__ == "__main__":
     game = "Walker2d-v2"
     algo = "ppo"
+    base = '/home/gaurav/mode/{}/graphs/{}/{}/{}-'
+
+
+    ptypes = ["fcn", "fcnnl", "walker", "nldwalker"]
+    nums = ["3", "3", "3", "3"]
     num_steps = 2000000
-    fig = plt.figure()
-    num = 3
-
-    infiles = glob.glob('./graphs/{}/{}/'.format(algo, game) + '*43-0.monitor.csv')
-    if len(infiles) > 0:
-        tx, mean, cis = plot(infiles, smooth=1, split=False)
-        plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
-        plt.plot(tx, mean, label="{} with 2-fcn policy".format(algo))
-
-    #infiles = glob.glob('./graphs/{}/{}/'.format(algo, game) + '*33-0.monitor.csv')
-    #tx, mean, cis = plot(infiles, smooth=1, split=False)
-    #plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
-    #plt.plot(tx, mean, label="{} with fcn 2 policy last".format(algo))
-
-    infiles = glob.glob('./graphs/{}/{}/'.format(algo, game) + '*-[1]-0.monitor.csv')
-    if len(infiles) > 0:
-        tx, mean, cis = plot(infiles, smooth=1, split=False)
-        plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
-        plt.plot(tx, mean, label="{} with 2-sfcn policy".format(algo))
-
-    infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/fcn/graphs/{}/{}/'.format(algo, game) + '*-0.monitor.csv')
-    if len(infiles) > 0:
-        tx, mean, cis = plot(infiles, smooth=1, split=False)
-        plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
-        plt.plot(tx, mean, label="{} with nld-fcn policy".format(algo))
-
-    infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/fcn/graphs/{}/{}-old/'.format(algo, game) + '*-0.monitor.csv')
-    if len(infiles) > 0:
-        tx, mean, cis = plot(infiles, smooth=1, split=False)
-        plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
-        plt.plot(tx, mean, label="{} with ld-fcn policy".format(algo))
-
-    infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/linear/graphs/{}/{}/'.format(algo, game) + '*-0.monitor.csv')
-    if len(infiles) > 0:
-        tx, mean, cis = plot(infiles, smooth=1, split=False)
-        plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
-        plt.plot(tx, mean, label="{} with linear policy".format(algo))
-
-    infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/scn/graphs/{}/{}/'.format(algo, game) + '*-0.monitor.csv')
-    if len(infiles) > 0:
-        tx, mean, cis = plot(infiles, smooth=1, split=False)
-        plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
-        plt.plot(tx, mean, label="{} with scn policy".format(algo))
-
-    infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/nlinear/graphs/{}/{}/'.format(algo, game) + '*-0.monitor.csv')
-    if len(infiles) > 0:
-        tx, mean, cis = plot(infiles, smooth=1, split=False)
-        plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
-        plt.plot(tx, mean, label="{} with non-linear policy".format(algo))
-
-    #infiles = glob.glob('/tmp/openai-2018-07-19-13-09-23-129882/' + '*.monitor.csv')
-    #if len(infiles) > 0:
-    #    tx, mean, cis = plot(infiles, smooth=1, split=False)
-    #    plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
-    #    plt.plot(tx, mean, label="{} with tensorflow linear policy".format(algo))
-
+    f1 = plt.figure(1)
     tick_fractions = np.array([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
     ticks = tick_fractions * num_steps
     tick_names = ["{:.1e}".format(tick) for tick in ticks]
-    #tick_names = ["{}".format(tick) for tick in tick_fractions]
+    
+
+    for ptype,num in zip(ptypes,nums):
+        regex = base.format(ptype,algo, game,num) + '*-0.monitor.csv'
+        infiles = glob.glob(regex)
+        if len(infiles) > 0:
+            tx, mean, cis = plot(infiles, smooth=1, split=False)
+            plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+            plt.plot(tx, mean, label="{} with {} policy using {} actors".format(algo,ptype,num))
+
+
+    linear(algo,game,plt)
+    nlinear(algo,game,plt)
+    
     plt.xticks(ticks, tick_names)
     plt.xlim(0, num_steps * 1.01)
-
     plt.xlabel('Number of Timesteps (M)')
     plt.ylabel('Rewards')
-
     plt.title(game)
     plt.legend(loc=4)
+    plt.show(block=False)
+    plt.pause(0.0001)
+
+    ptypes = ["fcn", "fcnnl", "walker", "nldwalker"]
+    nums = ["3", "3", "3", "3"]
+    num_steps = 2000000
+    tick_fractions = np.array([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
+    ticks = tick_fractions * num_steps
+    tick_names = ["{:.1e}".format(tick) for tick in ticks]
+    
+    f2 = plt.figure(2)
+
+    for ptype,num in zip(ptypes,nums):
+        regex = base.format(ptype,algo, game,num) + '*-0.monitor.csv'
+        infiles = glob.glob(regex)
+        if len(infiles) > 0:
+            tx, mean, cis = plot(infiles, smooth=1, split=False)
+            plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+            plt.plot(tx, mean, label="{} with {} policy using {} actors".format(algo,ptype,num))
+
+
+    
+    
+    plt.xticks(ticks, tick_names)
+    plt.xlim(0, num_steps * 1.01)
+    plt.xlabel('Number of Timesteps (M)')
+    plt.ylabel('Rewards')
+    plt.title(game)
+    plt.legend(loc=4)
+    
     plt.show()
