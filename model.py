@@ -207,13 +207,17 @@ class FactoredMLPBase(nn.Module):
               lambda x: nn.init.constant_(x, 0))
 
         self.decider = nn.Sequential(
-                init_(nn.Linear(num_inputs, 64)),
-                init_(nn.Linear(64, 64))
+            init_(nn.Linear(num_inputs, 64)),
+            nn.Tanh(),
+            init_(nn.Linear(64, 64)),
+            nn.Tanh()
             )
 
         self.decider2 = nn.Sequential(
             init_(nn.Linear(num_inputs, 64)),
-            init_(nn.Linear(64, 64))
+            nn.Tanh(),
+            init_(nn.Linear(64, 64)),
+            nn.Tanh()
         )
 
         self.actors = []
