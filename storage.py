@@ -11,6 +11,7 @@ class RolloutStorage(object):
         self.returns = torch.zeros(num_steps + 1, num_processes, 1)
         self.action_log_probs = torch.zeros(num_steps, num_processes, 1)
         self.choice_log_probs = torch.zeros(num_steps, num_processes, 1)
+        self.choice_log_probs2 = torch.zeros(num_steps, num_processes, 1)
         if action_space.__class__.__name__ == 'Discrete':
             action_shape = 1
         else:
@@ -18,6 +19,8 @@ class RolloutStorage(object):
         self.actions = torch.zeros(num_steps, num_processes, action_shape)
         self.choices = torch.zeros(num_steps, num_processes, 1)
         self.choices = self.choices.long()
+        self.choices2 = torch.zeros(num_steps, num_processes, 1)
+        self.choices2 = self.choices2.long()
 
         if action_space.__class__.__name__ == 'Discrete':
             self.actions = self.actions.long()
@@ -41,8 +44,10 @@ class RolloutStorage(object):
         self.states[self.step + 1].copy_(state)
         self.actions[self.step].copy_(action)
         self.action_log_probs[self.step].copy_(action_log_prob)
-        self.choices[self.step].copy_(choice)
-        self.choice_log_probs[self.step].copy_(choice_log_prob)
+        self.choices[self.step].copy_(choice[0])
+        self.choices2[self.step].copy_(choice[1])
+        self.choice_log_probs[self.step].copy_(choice_log_prob[0])
+        self.choice_log_probs2[self.step].copy_(choice_log_prob[1])
         self.value_preds[self.step].copy_(value_pred)
         self.rewards[self.step].copy_(reward)
         self.masks[self.step + 1].copy_(mask)
@@ -80,14 +85,16 @@ class RolloutStorage(object):
             states_batch = self.states[:-1].view(-1, self.states.size(-1))[indices]
             actions_batch = self.actions.view(-1, self.actions.size(-1))[indices]
             choices_batch = self.choices.view(-1, self.choices.size(-1))[indices]
+            choices_batch2 = self.choices2.view(-1, self.choices2.size(-1))[indices]
             return_batch = self.returns[:-1].view(-1, 1)[indices]
             masks_batch = self.masks[:-1].view(-1, 1)[indices]
             old_action_log_probs_batch = self.action_log_probs.view(-1, 1)[indices]
             old_choice_log_probs_batch = self.choice_log_probs.view(-1, 1)[indices]
+            old_choice_log_probs_batch2 = self.choice_log_probs2.view(-1, 1)[indices]
             adv_targ = advantages.view(-1, 1)[indices]
 
-            yield observations_batch, states_batch, actions_batch, choices_batch,\
-                return_batch, masks_batch, old_action_log_probs_batch, old_choice_log_probs_batch, adv_targ
+            yield observations_batch, states_batch, actions_batch, (choices_batch,choices_batch2),\
+                return_batch, masks_batch, old_action_log_probs_batch, (old_choice_log_probs_batch, old_choice_log_probs_batch2), adv_targ
 
     def recurrent_generator(self, advantages, num_mini_batch):
         num_processes = self.rewards.size(1)
