@@ -175,6 +175,7 @@ if __name__ == "__main__":
 
     linear(algo,game,plt)
     nlinear(algo,game,plt)
+    scn(algo,game,plt)
 
     plt.xticks(ticks, tick_names)
     plt.xlim(0, num_steps * 1.01)
