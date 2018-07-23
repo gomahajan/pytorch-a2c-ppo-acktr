@@ -137,11 +137,15 @@ class MLPBase(nn.Module):
               init_normc_,
               lambda x: nn.init.constant_(x, 0))
 
-        self.actor = nn.Sequential(
+        self.actornl = nn.Sequential(
             init_(nn.Linear(num_inputs, 64)),
             nn.Tanh(),
             init_(nn.Linear(64, 64)),
             nn.Tanh()
+        )
+
+        self.actor = nn.Sequential(
+            init_(nn.Linear(num_inputs, 64))
         )
 
         self.critic = nn.Sequential(
@@ -166,5 +170,6 @@ class MLPBase(nn.Module):
     def forward(self, inputs, states, masks):
         hidden_critic = self.critic(inputs)
         hidden_actor = self.actor(inputs)
+        hidden_actor_nl =self.actornl(inputs)
 
-        return self.critic_linear(hidden_critic), hidden_actor, states
+        return self.critic_linear(hidden_critic), hidden_actor+hidden_actor_nl, states
