@@ -157,7 +157,7 @@ if __name__ == "__main__":
     ptypes = ["fcnnl","snlfcn","snlfcn"]
     nums = ["6","3","6"]
     
-    num_steps = 4000000
+    num_steps = 2000000
     f1 = plt.figure(1)
     tick_fractions = np.array([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
     ticks = tick_fractions * num_steps
