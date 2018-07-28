@@ -14,16 +14,13 @@ class Policy(nn.Module):
         super(Policy, self).__init__()
         if len(obs_shape) == 3:
             self.base = CNNBase(obs_shape[0], recurrent_policy)
+            self.base = FactoredCNNBase(obs_shape[0], recurrent_policy, num_actors, hidden_size)
         elif len(obs_shape) == 1:
             assert not recurrent_policy, \
                 "Recurrent policy is not implemented for the MLP controller"
-            self.base = MLPBase(obs_shape[0])
+            self.base = FactoredMLPBase(obs_shape[0], num_actors, hidden_size)
         else:
             raise NotImplementedError
-
-        #START: HACK
-        self.base = FactoredMLPBase(obs_shape[0], num_actors, hidden_size)
-        #END: HACK
 
         if action_space.__class__.__name__ == "Discrete":
             num_outputs = action_space.n
@@ -44,7 +41,7 @@ class Policy(nn.Module):
         hidden_actor = torch.empty(choice.shape[0], self.base.output_size)
 
         for i in range(0, inputs.shape[0]):
-            hidden_actor[i] = actors[choice[i]](inputs[i])
+            hidden_actor[i] = actors[choice[i]](self.base.main(inputs[i]))
 
         dist = self.dist(hidden_actor)
 
@@ -68,7 +65,7 @@ class Policy(nn.Module):
         hidden_actor = torch.empty(choice.shape[0], self.base.output_size)
 
         for i in range(0, inputs.shape[0]):
-            hidden_actor[i] = actors[choice[i]](inputs[i])
+            hidden_actor[i] = actors[choice[i]](self.base.main(inputs[i]))
 
         dist = self.dist(hidden_actor)
         action_log_probs = dist.log_probs(action)
@@ -183,6 +180,73 @@ class MLPBase(nn.Module):
         hidden_actor = self.actor(inputs)
 
         return self.critic_linear(hidden_critic), hidden_actor, states, torch.Tensor([0])
+
+
+class FactoredCNNBase(nn.Module):
+    def __init__(self, num_inputs, num_actors, hidden_size, hsa):
+        super(FactoredCNNBase, self).__init__()
+
+        init_ = lambda m: init(m,
+                      nn.init.orthogonal_,
+                      lambda x: nn.init.constant_(x, 0),
+                      nn.init.calculate_gain('relu'))
+
+        self.main = nn.Sequential(
+            init_(nn.Conv2d(num_inputs, 32, 8, stride=4)),
+            nn.ReLU(),
+            init_(nn.Conv2d(32, 64, 4, stride=2)),
+            nn.ReLU(),
+            init_(nn.Conv2d(64, 32, 3, stride=1)),
+            nn.ReLU(),
+            Flatten()
+        )
+
+        self.hidden_sizea = hsa
+
+        self.ddist = Categorical(hidden_size, self.num_actors)
+
+        self.decider = nn.Sequential(
+            init_(nn.Linear(num_inputs, hidden_size)),
+            nn.ReLU()
+        )
+        self.actors = []
+
+        for i in range(0, self.num_actors):
+            self.actors.append(nn.Sequential(
+                init_(nn.Linear(32 * 7 * 7, hsa))
+            ))
+
+        init_ = lambda m: init(m,
+          nn.init.orthogonal_,
+          lambda x: nn.init.constant_(x, 0))
+
+        self.critic_linear = nn.Sequential(
+            init_(nn.Linear(32 * 7 * 7, 512)),
+            nn.ReLU(),
+            init_(nn.Linear(512, 1))
+        )
+
+        self.train()
+
+    @property
+    def state_size(self):
+            return 1
+
+    @property
+    def output_size(self):
+        return self.hidden_sizea
+
+    def forward(self, inputs, states, masks):
+        x = self.main(inputs / 255.0)
+
+        hidden_decision = self.decider(x)
+        ddist = self.ddist(hidden_decision)
+        choice = ddist.sample()
+
+        choice_log_probs = ddist.log_probs(choice)
+
+        return self.critic_linear(x), self.actors, states, ddist, choice, choice_log_probs
+
 
 class FactoredMLPBase(nn.Module):
     def __init__(self, num_inputs, num_actors, hidden_size):
