@@ -41,7 +41,7 @@ except OSError:
     #for f in files:
     #    os.remove(f)
 
-args.log_dir = args.log_dir + "{}-{}-".format(time.strftime("%Y%m%d-%H%M%S"), args.uid)
+args.log_dir = args.log_dir + "{}-{}-{}-".format(time.strftime("%Y%m%d-%H%M%S"), args.hidden_size, args.uid)
 
 
 def main():
@@ -70,7 +70,7 @@ def main():
     obs_shape = envs.observation_space.shape
     obs_shape = (obs_shape[0] * args.num_stack, *obs_shape[1:])
 
-    actor_critic = Policy(obs_shape, envs.action_space, args.recurrent_policy)
+    actor_critic = Policy(obs_shape, envs.action_space, args.recurrent_policy, args.hidden_size)
 
     if envs.action_space.__class__.__name__ == "Discrete":
         action_shape = 1

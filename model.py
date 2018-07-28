@@ -11,14 +11,14 @@ class Flatten(nn.Module):
 
 
 class Policy(nn.Module):
-    def __init__(self, obs_shape, action_space, recurrent_policy):
+    def __init__(self, obs_shape, action_space, recurrent_policy, hidden_size):
         super(Policy, self).__init__()
         if len(obs_shape) == 3:
             self.base = CNNBase(obs_shape[0], recurrent_policy)
         elif len(obs_shape) == 1:
             assert not recurrent_policy, \
                 "Recurrent policy is not implemented for the MLP controller"
-            self.base = MLPBase(obs_shape[0])
+            self.base = MLPBase(obs_shape[0], hidden_size)
         else:
             raise NotImplementedError
 
@@ -130,17 +130,19 @@ class CNNBase(nn.Module):
 
 
 class MLPBase(nn.Module):
-    def __init__(self, num_inputs):
+    def __init__(self, num_inputs, hidden_size):
         super(MLPBase, self).__init__()
 
         init_ = lambda m: init(m,
               init_normc_,
               lambda x: nn.init.constant_(x, 0))
 
+        self.hidden_size = hidden_size
+
         self.actor = nn.Sequential(
-            init_(nn.Linear(num_inputs, 64)),
+            init_(nn.Linear(num_inputs, hidden_size)),
             nn.Tanh(),
-            init_(nn.Linear(64, 64)),
+            init_(nn.Linear(hidden_size, hidden_size)),
             nn.Tanh()
         )
 
@@ -161,7 +163,7 @@ class MLPBase(nn.Module):
 
     @property
     def output_size(self):
-        return 64
+        return self.hidden_size
 
     def forward(self, inputs, states, masks):
         hidden_critic = self.critic(inputs)
