@@ -10,7 +10,7 @@ class Flatten(nn.Module):
 
 
 class Policy(nn.Module):
-    def __init__(self, obs_shape, action_space, recurrent_policy, num_actors):
+    def __init__(self, obs_shape, action_space, recurrent_policy, num_actors, hidden_size):
         super(Policy, self).__init__()
         if len(obs_shape) == 3:
             self.base = CNNBase(obs_shape[0], recurrent_policy)
@@ -22,7 +22,7 @@ class Policy(nn.Module):
             raise NotImplementedError
 
         #START: HACK
-        self.base = FactoredMLPBase(obs_shape[0], num_actors)
+        self.base = FactoredMLPBase(obs_shape[0], num_actors, hidden_size)
         #END: HACK
 
         if action_space.__class__.__name__ == "Discrete":
@@ -185,7 +185,7 @@ class MLPBase(nn.Module):
         return self.critic_linear(hidden_critic), hidden_actor, states, torch.Tensor([0])
 
 class FactoredMLPBase(nn.Module):
-    def __init__(self, num_inputs, num_actors):
+    def __init__(self, num_inputs, num_actors, hidden_size):
         super(FactoredMLPBase, self).__init__()
         self.num_actors = num_actors
 
@@ -193,12 +193,10 @@ class FactoredMLPBase(nn.Module):
               init_normc_,
               lambda x: nn.init.constant_(x, 0))
 
-        self.ddist = Categorical(self.output_size, self.num_actors)
+        self.ddist = Categorical(hidden_size, self.num_actors)
 
         self.decider = nn.Sequential(
-                init_(nn.Linear(num_inputs, 64)),
-                nn.Tanh(),
-                init_(nn.Linear(64, 64)),
+                init_(nn.Linear(num_inputs, hidden_size)),
                 nn.Tanh()
         )
         self.actors = []

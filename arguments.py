@@ -55,7 +55,7 @@ def get_args():
                         help='directory to save agent logs (default: ./graphs/)')
     parser.add_argument('--save-dir', default='./trained_models/',
                         help='directory to save agent logs (default: ./trained_models/)')
-    parser.add_argument('--no-cuda', action='store_true', default=False,
+    parser.add_argument('--no-cuda', action='store_true', default=True,
                         help='disables CUDA training')
     parser.add_argument('--add-timestep', action='store_true', default=False,
                         help='add timestep to observations')
@@ -69,6 +69,8 @@ def get_args():
                         help='number of linear sub policies (default: 3)')
     parser.add_argument('--uid', type=int, default=1,
                         help='number of linear sub policies (default: 1)')
+    parser.add_argument('--hidden-size', type=int, default=64,
+                        help='number of hidden units in decision (default: 64)')
     args = parser.parse_args()
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()
