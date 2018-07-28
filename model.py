@@ -14,7 +14,7 @@ class Policy(nn.Module):
         super(Policy, self).__init__()
         if len(obs_shape) == 3:
             self.base = CNNBase(obs_shape[0], recurrent_policy)
-            self.base = FactoredCNNBase(obs_shape[0], recurrent_policy, num_actors, hidden_size)
+            self.base = FactoredCNNBase(obs_shape[0], num_actors, hidden_size, 512)
         elif len(obs_shape) == 1:
             assert not recurrent_policy, \
                 "Recurrent policy is not implemented for the MLP controller"
@@ -39,9 +39,10 @@ class Policy(nn.Module):
     def act(self, inputs, states, masks, deterministic=False):
         value, actors, states, ddist, choice, choice_log_prob = self.base(inputs, states, masks)
         hidden_actor = torch.empty(choice.shape[0], self.base.output_size)
+        inputs = self.base.main(inputs)
 
         for i in range(0, inputs.shape[0]):
-            hidden_actor[i] = actors[choice[i]](self.base.main(inputs[i]))
+            hidden_actor[i] = actors[choice[i]](inputs[i])
 
         dist = self.dist(hidden_actor)
 
@@ -63,9 +64,10 @@ class Policy(nn.Module):
         value, actors, states, ddist, _, _ = self.base(inputs, states, masks)
 
         hidden_actor = torch.empty(choice.shape[0], self.base.output_size)
+        inputs = self.base.main(inputs)
 
         for i in range(0, inputs.shape[0]):
-            hidden_actor[i] = actors[choice[i]](self.base.main(inputs[i]))
+            hidden_actor[i] = actors[choice[i]](inputs[i])
 
         dist = self.dist(hidden_actor)
         action_log_probs = dist.log_probs(action)
@@ -186,6 +188,7 @@ class FactoredCNNBase(nn.Module):
     def __init__(self, num_inputs, num_actors, hidden_size, hsa):
         super(FactoredCNNBase, self).__init__()
 
+        self.num_actors = num_actors
         init_ = lambda m: init(m,
                       nn.init.orthogonal_,
                       lambda x: nn.init.constant_(x, 0),
@@ -206,7 +209,7 @@ class FactoredCNNBase(nn.Module):
         self.ddist = Categorical(hidden_size, self.num_actors)
 
         self.decider = nn.Sequential(
-            init_(nn.Linear(num_inputs, hidden_size)),
+            init_(nn.Linear(32 * 7 * 7, hidden_size)),
             nn.ReLU()
         )
         self.actors = []
