@@ -138,14 +138,14 @@ class MLPBase(nn.Module):
               lambda x: nn.init.constant_(x, 0))
 
         self.actornl = nn.Sequential(
-            init_(nn.Linear(num_inputs, 64)),
+            init_(nn.Linear(num_inputs, 16)),
             nn.Tanh(),
-            init_(nn.Linear(64, 64)),
+            init_(nn.Linear(16, 16)),
             nn.Tanh()
         )
 
         self.actor = nn.Sequential(
-            init_(nn.Linear(num_inputs, 64))
+            init_(nn.Linear(num_inputs, 16))
         )
 
         self.critic = nn.Sequential(
@@ -165,7 +165,7 @@ class MLPBase(nn.Module):
 
     @property
     def output_size(self):
-        return 64
+        return 16
 
     def forward(self, inputs, states, masks):
         hidden_critic = self.critic(inputs)
