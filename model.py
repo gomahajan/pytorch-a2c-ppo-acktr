@@ -39,7 +39,8 @@ class Policy(nn.Module):
     def act(self, inputs, states, masks, deterministic=False):
         value, actors, states, ddist, choice, choice_log_prob = self.base(inputs, states, masks)
         hidden_actor = torch.empty(choice.shape[0], self.base.output_size)
-        inputs = self.base.main(inputs)
+        with torch.no_grad():
+            inputs = self.base.main(inputs)
 
         for i in range(0, inputs.shape[0]):
             hidden_actor[i] = actors[choice[i]](inputs[i])
@@ -64,7 +65,8 @@ class Policy(nn.Module):
         value, actors, states, ddist, _, _ = self.base(inputs, states, masks)
 
         hidden_actor = torch.empty(choice.shape[0], self.base.output_size)
-        inputs = self.base.main(inputs)
+        with torch.no_grad():
+            inputs = self.base.main(inputs)
 
         for i in range(0, inputs.shape[0]):
             hidden_actor[i] = actors[choice[i]](inputs[i])
