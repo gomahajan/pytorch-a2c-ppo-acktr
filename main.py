@@ -164,7 +164,7 @@ def main():
         rollouts.after_update()
 
         if j % args.save_interval == 0 and args.save_dir != "":
-            save_path = os.path.join(args.save_dir, args.algo)
+            save_path = os.path.join(os.path.join(args.save_dir, args.algo), args.env_name)
             try:
                 os.makedirs(save_path)
             except OSError:
@@ -178,7 +178,7 @@ def main():
             save_model = [save_model,
                             hasattr(envs, 'ob_rms') and envs.ob_rms or None]
 
-            torch.save(save_model, os.path.join(os.path.join(save_path, args.env_name), fileNameSuffix + ".pt"))
+            torch.save(save_model, os.path.join(save_path, fileNameSuffix + ".pt"))
 
         if j % args.log_interval == 0:
             end = time.time()
