@@ -20,6 +20,7 @@ from storage import RolloutStorage
 from visualize import visdom_plot
 
 import algo
+import socket
 
 args = get_args()
 
@@ -41,7 +42,7 @@ except OSError:
     #for f in files:
     #    os.remove(f)
 
-args.log_dir = args.log_dir + "{}-{}-{}-".format(time.strftime("%Y%m%d-%H%M%S"), args.hidden_size, args.uid)
+args.log_dir = args.log_dir + "{}-{}-{}-{}-".format(time.strftime("%Y%m%d-%H%M%S"), socket.gethostname(), args.hidden_size, args.uid)
 
 
 def main():
