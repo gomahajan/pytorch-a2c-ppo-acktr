@@ -25,7 +25,7 @@ parser.add_argument('--add-timestep', action='store_true', default=False,
                     help='add timestep to observations')
 args = parser.parse_args()
 
-filename = "20180730-103005-gaurav-4144-16-3-"
+filename = "20180730-103005-gaurav-4144-64-1-"
 
 env = make_env(args.env_name, args.seed, 0, None, args.add_timestep)
 env = DummyVecEnv([env])
