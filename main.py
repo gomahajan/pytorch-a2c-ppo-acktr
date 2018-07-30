@@ -42,7 +42,8 @@ except OSError:
     #for f in files:
     #    os.remove(f)
 
-args.log_dir = args.log_dir + "{}-{}-{}-{}-".format(time.strftime("%Y%m%d-%H%M%S"), socket.gethostname(), args.hidden_size, args.uid)
+fileNameSuffix = "{}-{}-{}-{}-".format(time.strftime("%Y%m%d-%H%M%S"), socket.gethostname(), args.hidden_size, args.uid)
+args.log_dir = args.log_dir + fileNameSuffix
 
 
 def main():
@@ -177,7 +178,7 @@ def main():
             save_model = [save_model,
                             hasattr(envs, 'ob_rms') and envs.ob_rms or None]
 
-            torch.save(save_model, os.path.join(save_path, args.env_name + ".pt"))
+            torch.save(save_model, os.path.join(os.path.join(save_path, args.env_name), fileNameSuffix + ".pt"))
 
         if j % args.log_interval == 0:
             end = time.time()
