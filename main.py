@@ -42,7 +42,7 @@ except OSError:
     #for f in files:
     #    os.remove(f)
 
-fileNameSuffix = "{}-{}-{}-{}-".format(time.strftime("%Y%m%d-%H%M%S"), socket.gethostname(), args.hidden_size, args.uid)
+fileNameSuffix = "scritic-{}-{}-{}-{}-".format(time.strftime("%Y%m%d-%H%M%S"), socket.gethostname(), args.hidden_size, args.uid)
 args.log_dir = args.log_dir + fileNameSuffix
 
 

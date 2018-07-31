@@ -147,13 +147,13 @@ class MLPBase(nn.Module):
         )
 
         self.critic = nn.Sequential(
-            init_(nn.Linear(num_inputs, 64)),
+            init_(nn.Linear(num_inputs, hidden_size)),
             nn.Tanh(),
-            init_(nn.Linear(64, 64)),
+            init_(nn.Linear(hidden_size, hidden_size)),
             nn.Tanh()
         )
 
-        self.critic_linear = init_(nn.Linear(64, 1))
+        self.critic_linear = init_(nn.Linear(hidden_size, 1))
 
         self.train()
 
