@@ -20,6 +20,7 @@ from storage import RolloutStorage
 from visualize import visdom_plot
 
 import algo
+import socket
 
 args = get_args()
 
@@ -41,7 +42,8 @@ except OSError:
     #for f in files:
     #    os.remove(f)
 
-args.log_dir = args.log_dir + "{}-{}-".format(time.strftime("%Y%m%d-%H%M%S"), args.uid)
+fileSuffix = "{}-{}-{}".format(time.strftime("%Y%m%d-%H%M%S"), socket.gethostname(), args.uid)
+args.log_dir = args.log_dir + fileSuffix
 
 def main():
     print("#######")
@@ -161,7 +163,7 @@ def main():
         rollouts.after_update()
 
         if j % args.save_interval == 0 and args.save_dir != "":
-            save_path = os.path.join(args.save_dir, args.algo)
+            save_path = os.path.join(os.path.join(args.save_dir, args.algo), args.env_name)
             try:
                 os.makedirs(save_path)
             except OSError:
@@ -175,7 +177,7 @@ def main():
             save_model = [save_model,
                             hasattr(envs, 'ob_rms') and envs.ob_rms or None]
 
-            torch.save(save_model, os.path.join(save_path, args.env_name + ".pt"))
+            torch.save(save_model, os.path.join(save_path, fileSuffix + ".pt"))
 
         if j % args.log_interval == 0:
             end = time.time()
