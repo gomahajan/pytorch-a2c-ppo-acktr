@@ -124,38 +124,107 @@ def plot(files, bin_size=100, smooth=1, split=True):
         otx = otx[:][0:min_v]
 
     mean = np.mean(y, axis=0)
-    sd = 0.2*np.std(y, axis=0)
+    sd = 0.5*np.std(y, axis=0)
     cis = (mean - sd, mean + sd)
 
     return otx, mean, cis
 
 
 def linear(algo, game, plt):
-    infiles = glob.glob('/home/gaurav/mode/linear/graphs/{}/{}/'.format(algo,game)+'*[12]-0.monitor.csv')
+    infiles = glob.glob('/home/gaurav/GitRepo/fpn/linear/graphs/{}/{}/'.format(algo,game)+'*[12]-0.monitor.csv')
     tx, mean, cis = plot(infiles, smooth=1, split=False)
     plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
     plt.plot(tx, mean, label="{} with linear policy".format(algo))
 
-def nlinear(algo, game, plt):
-    infiles = glob.glob('/home/gaurav/mode/nlinear/graphs/{}/{}/'.format(algo,game)+'*[12]-0.monitor.csv')
-    tx, mean, cis = plot(infiles, smooth=1, split=False)
-    plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
-    plt.plot(tx, mean, label="{} with nlinear policy".format(algo))
-
 def scn(algo, game, plt):
-    infiles = glob.glob('/home/gaurav/mode/scn/graphs/{}/{}/'.format(algo,game)+'*[12]-0.monitor.csv')
+    infiles = glob.glob('/home/gaurav/GitRepo/fpn/scn/graphs/{}/{}/'.format(algo,game)+'*[12]-0.monitor.csv')
+    if len(infiles) > 0:
+        tx, mean, cis = plot(infiles, smooth=1, split=False)
+        plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+        plt.plot(tx, mean, label="{} with scn policy".format(algo))
+
+def scn16(algo, game, plt):
+    infiles = glob.glob('/home/gaurav/GitRepo/fpn/scn16/graphs/{}/{}/'.format(algo,game)+'*[12]-0.monitor.csv')
     tx, mean, cis = plot(infiles, smooth=1, split=False)
     plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
-    plt.plot(tx, mean, label="{} with scn policy".format(algo))
+    plt.plot(tx, mean, label="{} with scn16 policy".format(algo))
+
+def ofcnnl(algo, game, plt):
+    infiles = glob.glob('/home/gaurav/GitRepo/fpn/ofcnnl/graphs/{}/{}/'.format(algo,game)+'*[1234]-0.monitor.csv')
+    tx, mean, cis = plot(infiles, smooth=1, split=False)
+    plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+    plt.plot(tx, mean, label="{} with original nlfcn policy on new pc 6 actors 64 hidden layer".format(algo))
+
+def nlfcn64(algo, game, plt):
+    infiles = glob.glob('/home/gaurav/GitRepo/results/fcn/graphs/{}/{}/'.format(algo,game)+'*{}*64*{}-0.monitor.csv'.format(pc, rseeds))
+    if len(infiles) > 0:
+        tx, mean, cis = plot(infiles, smooth=1, split=False)
+        plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+        plt.plot(tx, mean, label="nlfcn policy using 6 actors 64 hidden units")
+
+def nlfcn16(algo, game, plt):
+    infiles = glob.glob('/home/gaurav/GitRepo/results/fcn/graphs/{}/{}/'.format(algo,game)+'*{}*16*{}-0.monitor.csv'.format(pc, rseeds))
+    if len(infiles) > 0:
+        tx, mean, cis = plot(infiles, smooth=1, split=False)
+        plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+        plt.plot(tx, mean, label="nlfcn policy using 6 actors 16 hidden units")
+
+def nlfcn32(algo, game, plt):
+    infiles = glob.glob('/home/gaurav/GitRepo/results/fcn/graphs/{}/{}/'.format(algo,game)+'*{}*32*{}-0.monitor.csv'.format(pc, rseeds))
+    if len(infiles) > 0:
+        tx, mean, cis = plot(infiles, smooth=1, split=False)
+        plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+        plt.plot(tx, mean, label="nlfcn policy using 6 actors 32 hidden units")
+
+
+def nlfcn8(algo, game, plt):
+    infiles = glob.glob('/home/gaurav/GitRepo/results/fcn/graphs/{}/{}/'.format(algo,game)+'*{}*8*{}-0.monitor.csv'.format(pc, rseeds))
+    if len(infiles) > 0:
+        tx, mean, cis = plot(infiles, smooth=1, split=False)
+        plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+        plt.plot(tx, mean, label="nlfcn policy using 6 actors 8 hidden units")
+
+def nlinear16(algo, game, plt): 
+    infiles = glob.glob('/home/gaurav/GitRepo/fpn/nlinear/graphs/{}/{}/'.format(algo,game)+'*730*{}*16*{}-0.monitor.csv'.format(pc, rseeds))
+    tx, mean, cis = plot(infiles, smooth=1, split=False)
+    plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+    plt.plot(tx, mean, label="{} with nlinear policy 16".format(algo))
+
+def nlinear64(algo, game, plt):
+    infiles = glob.glob('/home/gaurav/GitRepo/fpn/nlinear/graphs/{}/{}/'.format(algo,game)+'*{}*64*{}-0.monitor.csv'.format(pc, rseeds))
+    tx, mean, cis = plot(infiles, smooth=1, split=False)
+    plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+    plt.plot(tx, mean, label="{} with nlinear policy 64".format(algo))
+
+def nlinear(algo, game, plt):
+    infiles = glob.glob('/home/gaurav/GitRepo/fpn/nlinear/graphs/{}/{}/'.format(algo,game)+'*-0.monitor.csv')
+    if len(infiles) > 0:
+        tx, mean, cis = plot(infiles, smooth=1, split=False)
+        plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+        plt.plot(tx, mean, label="{} with nlinear policy 64".format(algo))
+
+def smallcritic_nlinear16(algo, game, plt):
+    infiles = glob.glob('/home/gaurav/GitRepo/fpn/nlinear/graphs/{}/{}/'.format(algo,game)+'scritic*{}*16*{}-0.monitor.csv'.format(pc, rseeds))
+    tx, mean, cis = plot(infiles, smooth=1, split=False)
+    plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+    plt.plot(tx, mean, label="{} with small critic nlinear policy 16".format(algo))
+
+def nlfcn_baseline(algo, game, plt):
+    infiles = glob.glob('/home/gaurav/GitRepo/fpn/nlfpn/graphs/{}/{}/'.format(algo,game)+'baseline-[12]-0.monitor.csv')
+    if len(infiles) > 0:
+        tx, mean, cis = plot(infiles, smooth=1, split=False)
+        plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
+        plt.plot(tx, mean, label="baseline nlfcn policy using 6 actors 64 hidden units")
 
 if __name__ == "__main__":
-    game = "Walker2d-v2"
+    game = "HalfCheetah-v2"
     algo = "ppo"
-    base = '/home/gaurav/mode/{}/graphs/{}/{}/{}-'
+    base = '/home/gaurav/GitRepo/fpn/{}/graphs/{}/{}/{}-'
 
 
-    ptypes = ["fcnnl","snlfcn","snlfcn"]
-    nums = ["6","3","6"]
+    ptypes = []
+    nums = []
+    hiddens = []
     
     num_steps = 2000000
     f1 = plt.figure(1)
@@ -164,18 +233,28 @@ if __name__ == "__main__":
     tick_names = ["{:.1e}".format(tick) for tick in ticks]
     
 
-    for ptype,num in zip(ptypes,nums):
-        regex = base.format(ptype,algo, game,num) + '*-0.monitor.csv'
+    for ptype,num, hidden in zip(ptypes,nums, hiddens):
+        regex = base.format(ptype,algo, game,num) + '*-{}-*-0.monitor.csv'.format(hidden)
         infiles = glob.glob(regex)
         if len(infiles) > 0:
             tx, mean, cis = plot(infiles, smooth=1, split=False)
             plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
-            plt.plot(tx, mean, label="{} with {} policy using {} actors".format(algo,ptype,num))
+            plt.plot(tx, mean, label="{} with {} policy using {} actors and hidden size {}".format(algo,ptype,num, hidden))
 
-
+    pc = "msi"
+    rseeds = "*"
+    #nlfcn_baseline(algo, game, plt)
+    nlfcn64(algo, game, plt)
+    nlfcn32(algo, game, plt)
+    nlfcn16(algo, game, plt)
+    nlfcn8(algo, game, plt)
     linear(algo,game,plt)
-    nlinear(algo,game,plt)
+    #nlinear16(algo,game,plt)
+    nlinear(algo, game, plt)
+    #smallcritic_nlinear16(algo, game, plt)
     scn(algo,game,plt)
+    #scn16(algo,game,plt)
+    #ofcnnl(algo,game,plt)
 
     plt.xticks(ticks, tick_names)
     plt.xlim(0, num_steps * 1.01)
