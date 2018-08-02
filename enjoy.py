@@ -17,7 +17,7 @@ parser.add_argument('--num-stack', type=int, default=1,
                     help='number of frames to stack (default: 4)')
 parser.add_argument('--log-interval', type=int, default=10,
                     help='log interval, one log per n updates (default: 10)')
-parser.add_argument('--env-name', default='Walker2d-v2',
+parser.add_argument('--env-name', default='Hopper-v2',
                     help='environment to train on (default: PongNoFrameskip-v4)')
 parser.add_argument('--load-dir', default='./trained_models/ppo/',
                     help='directory to save agent logs (default: ./trained_models/)')
@@ -25,7 +25,7 @@ parser.add_argument('--add-timestep', action='store_true', default=False,
                     help='add timestep to observations')
 args = parser.parse_args()
 
-filename = "20180730-103005-gaurav-4144-64-2-"
+filename = "3-20180801-170454-gaurav-msi-64-2-"
 
 
 env = make_env(args.env_name, args.seed, 0, None, args.add_timestep)
