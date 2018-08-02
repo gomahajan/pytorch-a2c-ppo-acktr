@@ -110,12 +110,13 @@ Choice tensor([[ 0]]) with probability tensor([[ 1.0000]])
 Choice tensor([[ 0]]) with probability tensor([[ 0.9999]])
 Choice tensor([[ 0]]) with probability tensor([[ 0.9997]])
 Choice tensor([[ 0]]) with probability tensor([[ 0.9876]])
+100th frame
 Choice tensor([[ 2]]) with probability tensor([[ 0.7705]])
 Choice tensor([[ 2]]) with probability tensor([[ 0.7998]])
 Choice tensor([[ 2]]) with probability tensor([[ 0.9959]])
 Choice tensor([[ 2]]) with probability tensor([[ 0.9590]])
 Choice tensor([[ 2]]) with probability tensor([[ 0.2611]])
-100th frame
+105th frame
 Choice tensor([[ 1]]) with probability tensor([[ 0.9933]])
 Choice tensor([[ 1]]) with probability tensor([[ 0.4496]])
 Choice tensor([[ 0]]) with probability tensor([[ 0.5850]])
