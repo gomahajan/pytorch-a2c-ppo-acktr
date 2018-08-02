@@ -78,12 +78,27 @@ if args.env_name.find('Bullet') > -1:
         if (p.getBodyInfo(i)[0].decode() == "torso"):
             torsoId = i
 
+N = 1000
+print(current_obs.shape)
+print(current_obs.shape[1])
+X = torch.empty(N, current_obs.shape[1])
+y = torch.empty(N, 1)
+i = 0
+
 while True:
     with torch.no_grad():
         value, action, choice, _, choice_log_probs, states = actor_critic.act(current_obs,
                                                     states,
                                                     masks,
                                                     deterministic=True)
+
+    X[i] = current_obs
+    y[i] = choice
+    i = i+1
+
+    if i % N == 0:
+        break;
+
     cpu_actions = action.squeeze(1).cpu().numpy()
     #print("Actions: {} for choice {}".format(action, choice))
     print("Choice {} with probability {}".format(choice, torch.exp(choice_log_probs)))
@@ -106,3 +121,60 @@ while True:
             p.resetDebugVisualizerCamera(distance, yaw, -20, humanPos)
 
     render_func('human')
+
+import pandas as pd
+
+X = X.view(N, current_obs.shape[1]).numpy()
+y = y.view(N).numpy()
+print(X)
+print(y)
+
+feat_cols = [ 'feature'+str(i) for i in range(X.shape[1]) ]
+
+df = pd.DataFrame(X,columns=feat_cols)
+df['label'] = y
+df['label'] = df['label'].apply(lambda i: str(i))
+
+X, y = None, None
+
+rndperm = np.random.permutation(df.shape[0])
+
+
+import time
+
+from sklearn.manifold import TSNE
+
+n_sne = N
+
+time_start = time.time()
+tsne = TSNE(n_components=2, verbose=1, perplexity=40, n_iter=300)
+tsne_results = tsne.fit_transform(df.loc[rndperm[:n_sne],feat_cols].values)
+
+print('t-SNE done! Time elapsed: {} seconds'.format(time.time()-time_start))
+
+df_tsne = df.loc[rndperm[:n_sne],:].copy()
+df_tsne['x-tsne'] = tsne_results[:,0]
+df_tsne['y-tsne'] = tsne_results[:,1]
+
+print("Index")
+print(df.index)
+print(df['label'])
+print(df['label'] == str(float(1)))
+import matplotlib.pyplot as plt
+# Create the figure
+fig = plt.figure( figsize=(8,8) )
+ax = fig.add_subplot(1, 1, 1, title='TSNE' )
+# Create the scatter
+colors = ['red', 'green', 'blue']
+print()
+for i in range(0,3):
+    ax.scatter(
+        x=df_tsne.loc[df['label'] == str(float(i))]['x-tsne'],
+        y=df_tsne.loc[df['label'] == str(float(i))]['y-tsne'],
+        c=colors[i],
+        cmap=plt.cm.get_cmap('Paired'),
+        alpha=0.15,
+        label="Actor {}".format(i))
+
+plt.legend()
+plt.show()
