@@ -81,53 +81,72 @@ if args.env_name.find('Bullet') > -1:
 N = 1000
 print(current_obs.shape)
 print(current_obs.shape[1])
-X = torch.empty(N, current_obs.shape[1])
-y = torch.empty(N, 1)
-i = 0
+loading = False
+if not loading:
+    Xs = torch.empty(N, current_obs.shape[1])
+    y = torch.empty(N, 1)
+    i = 0
 
-while True:
-    with torch.no_grad():
-        value, action, choice, _, choice_log_probs, states = actor_critic.act(current_obs,
-                                                    states,
-                                                    masks,
-                                                    deterministic=True)
+    while True:
+        with torch.no_grad():
+            value, action, choice, _, choice_log_probs, states = actor_critic.act(current_obs,
+                                                        states,
+                                                        masks,
+                                                        deterministic=True)
 
-    X[i] = current_obs
-    y[i] = choice
-    i = i+1
+        Xs[i] = current_obs
+        y[i] = choice
+        i = i+1
 
-    if i % N == 0:
-        break;
+        if i % N == 0:
+            break
 
-    cpu_actions = action.squeeze(1).cpu().numpy()
-    #print("Actions: {} for choice {}".format(action, choice))
-    print("Choice {} with probability {}".format(choice, torch.exp(choice_log_probs)))
-    # Obser reward and next obs
-    obs, reward, done, _ = env.step(cpu_actions)
+        cpu_actions = action.squeeze(1).cpu().numpy()
+        #print("Actions: {} for choice {}".format(action, choice))
+        print("Choice {} with probability {}".format(choice, torch.exp(choice_log_probs)))
+        # Obser reward and next obs
+        obs, reward, done, _ = env.step(cpu_actions)
 
-    masks.fill_(0.0 if done else 1.0)
+        masks.fill_(0.0 if done else 1.0)
 
-    if current_obs.dim() == 4:
-        current_obs *= masks.unsqueeze(2).unsqueeze(2)
-    else:
-        current_obs *= masks
-    update_current_obs(obs)
+        if current_obs.dim() == 4:
+            current_obs *= masks.unsqueeze(2).unsqueeze(2)
+        else:
+            current_obs *= masks
+        update_current_obs(obs)
 
-    if args.env_name.find('Bullet') > -1:
-        if torsoId > -1:
-            distance = 5
-            yaw = 0
-            humanPos, humanOrn = p.getBasePositionAndOrientation(torsoId)
-            p.resetDebugVisualizerCamera(distance, yaw, -20, humanPos)
+        if args.env_name.find('Bullet') > -1:
+            if torsoId > -1:
+                distance = 5
+                yaw = 0
+                humanPos, humanOrn = p.getBasePositionAndOrientation(torsoId)
+                p.resetDebugVisualizerCamera(distance, yaw, -20, humanPos)
 
-    render_func('human')
+        render_func('human')
 
+        from Xlib import display, X
+        from PIL import Image  # PIL
+
+        if i % 20 == 0:
+            W, H = 500, 700
+            dsp = display.Display()
+            root = dsp.screen().root
+            raw = root.get_image(500, 200, W, H, X.ZPixmap, 0xffffffff)
+            image = Image.frombytes("RGB", (W, H), raw.data, "raw", "BGRX")
+            image.save("data/images/img{}.png".format(i), "PNG")
+
+    np.savetxt("data/X.csv", Xs.numpy())
+    np.savetxt("data/y.csv", y.numpy())
+
+else:
+    Xs = torch.Tensor(np.loadtxt("data/X.csv"))
+    y = torch.Tensor(np.loadtxt("data/y.csv"))
+
+X = Xs
 import pandas as pd
 
 X = X.view(N, current_obs.shape[1]).numpy()
 y = y.view(N).numpy()
-print(X)
-print(y)
 
 feat_cols = [ 'feature'+str(i) for i in range(X.shape[1]) ]
 
@@ -156,17 +175,13 @@ df_tsne = df.loc[rndperm[:n_sne],:].copy()
 df_tsne['x-tsne'] = tsne_results[:,0]
 df_tsne['y-tsne'] = tsne_results[:,1]
 
-print("Index")
-print(df.index)
-print(df['label'])
-print(df['label'] == str(float(1)))
+df_tsne.to_csv("data/tsne.csv")
 import matplotlib.pyplot as plt
 # Create the figure
 fig = plt.figure( figsize=(8,8) )
 ax = fig.add_subplot(1, 1, 1, title='TSNE' )
 # Create the scatter
 colors = ['red', 'green', 'blue']
-print()
 for i in range(0,3):
     ax.scatter(
         x=df_tsne.loc[df['label'] == str(float(i))]['x-tsne'],
