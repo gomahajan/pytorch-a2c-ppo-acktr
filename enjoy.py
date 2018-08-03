@@ -167,9 +167,14 @@ def tsne(X,y,N, data_dir="data", n_actors=3):
     df_tsne = df.loc[rndperm[:n_sne],:].copy()
     df_tsne['x-tsne'] = tsne_results[:,0]
     df_tsne['y-tsne'] = tsne_results[:,1]
-    df_tsne = df_tsne.sort_values('x-tsne')
+    df_tsne['x-bin'] = tsne_results[:,0].astype(int)
+    df_tsne['y-bin'] = tsne_results[:, 1].astype(int)
+    df_tsne = df_tsne.sort_values(by=['x-bin', 'y-bin']).sort_values(by=['label']).sort_index()
 
     df_tsne.to_csv("{}/tsne.csv".format(data_dir))
+    return df_tsne
+
+def plot(df_tsne, n_actors=3):
     # Create the figure
     fig = plt.figure( figsize=(8,8) )
     ax = fig.add_subplot(1, 1, 1, title='TSNE' )
@@ -189,8 +194,8 @@ def tsne(X,y,N, data_dir="data", n_actors=3):
 
     for i in range(0,n_actors):
         ax.scatter(
-            x=df_tsne.loc[df['label'] == str(float(i))]['x-tsne'],
-            y=df_tsne.loc[df['label'] == str(float(i))]['y-tsne'],
+            x=df_tsne.loc[df_tsne['label'] == float(i)]['x-tsne'],
+            y=df_tsne.loc[df_tsne['label'] == float(i)]['y-tsne'],
             c=colors[i],
             cmap=plt.cm.get_cmap('Paired'),
             alpha=0.15,
@@ -200,7 +205,14 @@ def tsne(X,y,N, data_dir="data", n_actors=3):
     plt.show()
 
 
-X, y, shape, N = generateData()
+data_dir="data"
+X, y, shape, N = generateData(filename="3-20180801-170454-gaurav-msi-64-2-", data_dir="data", loading=True)
 X = X.view(N, shape).numpy()
 y = y.view(N).numpy()
-tsne(X,y,N)
+get_tsne = True
+if get_tsne:
+    df_tsne = tsne(X,y,N)
+
+df_tsne = pd.read_csv("{}/tsne.csv".format(data_dir), index_col=0)
+
+plot(df_tsne)
