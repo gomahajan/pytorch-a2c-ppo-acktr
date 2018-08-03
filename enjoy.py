@@ -1,6 +1,7 @@
 import argparse
 import os
 import types
+import matplotlib.pyplot as plt
 
 import numpy as np
 import torch
@@ -9,6 +10,11 @@ from baselines.common.vec_env.vec_normalize import VecNormalize
 
 from envs import make_env
 
+from Xlib import display, X
+from PIL import Image  # PIL
+import time
+import pandas as pd
+from sklearn.manifold import TSNE
 
 parser = argparse.ArgumentParser(description='RL')
 parser.add_argument('--seed', type=int, default=2,
@@ -26,7 +32,7 @@ parser.add_argument('--add-timestep', action='store_true', default=False,
 args = parser.parse_args()
 
 
-def generateData(filename="3-20180801-170454-gaurav-msi-64-2-", data_dir="data", N= 10000, loading=True, save_rate=20):
+def generateData(filename="3-20180801-170454-gaurav-msi-64-2-", data_dir="data", N= 1000, loading=True, save_rate=1):
     env = make_env(args.env_name, args.seed, 0, None, args.add_timestep)
     env = DummyVecEnv([env])
 
@@ -68,6 +74,8 @@ def generateData(filename="3-20180801-170454-gaurav-msi-64-2-", data_dir="data",
         render_func('human')
         obs = env.reset()
         update_current_obs(obs)
+
+        time.sleep(5)
 
         if args.env_name.find('Bullet') > -1:
             import pybullet as p
@@ -118,14 +126,11 @@ def generateData(filename="3-20180801-170454-gaurav-msi-64-2-", data_dir="data",
 
             render_func('human')
 
-            from Xlib import display, X
-            from PIL import Image  # PIL
-
             if i % save_rate == 0:
                 W, H = 500, 700
                 dsp = display.Display()
                 root = dsp.screen().root
-                raw = root.get_image(500, 200, W, H, X.ZPixmap, 0xffffffff)
+                raw = root.get_image(500, 150, W, H, X.ZPixmap, 0xffffffff)
                 image = Image.frombytes("RGB", (W, H), raw.data, "raw", "BGRX")
                 image.save("{}/images/img{}.png".format(data_dir, i), "PNG")
 
@@ -140,8 +145,6 @@ def generateData(filename="3-20180801-170454-gaurav-msi-64-2-", data_dir="data",
 
 
 def tsne(X,y,N, data_dir="data", n_actors=3):
-    import pandas as pd
-
     feat_cols = [ 'feature'+str(i) for i in range(X.shape[1]) ]
 
     df = pd.DataFrame(X,columns=feat_cols)
@@ -152,10 +155,6 @@ def tsne(X,y,N, data_dir="data", n_actors=3):
 
     rndperm = np.random.permutation(df.shape[0])
 
-
-    import time
-
-    from sklearn.manifold import TSNE
 
     n_sne = N
 
@@ -168,9 +167,9 @@ def tsne(X,y,N, data_dir="data", n_actors=3):
     df_tsne = df.loc[rndperm[:n_sne],:].copy()
     df_tsne['x-tsne'] = tsne_results[:,0]
     df_tsne['y-tsne'] = tsne_results[:,1]
+    df_tsne = df_tsne.sort_values('x-tsne')
 
     df_tsne.to_csv("{}/tsne.csv".format(data_dir))
-    import matplotlib.pyplot as plt
     # Create the figure
     fig = plt.figure( figsize=(8,8) )
     ax = fig.add_subplot(1, 1, 1, title='TSNE' )
