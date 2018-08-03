@@ -205,14 +205,14 @@ def plot(df_tsne, n_actors=3):
     plt.show()
 
 
-data_dir="data"
-X, y, shape, N = generateData(filename="3-20180801-170454-gaurav-msi-64-2-", data_dir="data", loading=True)
+data_dir="data_6_8"
+X, y, shape, N = generateData(filename="6-20180731-145916-gaurav-msi-8-2-", data_dir=data_dir, loading=False)
 X = X.view(N, shape).numpy()
 y = y.view(N).numpy()
 get_tsne = True
 if get_tsne:
-    df_tsne = tsne(X,y,N)
+    df_tsne = tsne(X,y,N, data_dir=data_dir)
 
 df_tsne = pd.read_csv("{}/tsne.csv".format(data_dir), index_col=0)
 
-plot(df_tsne)
+plot(df_tsne, n_actors=6)
