@@ -174,7 +174,7 @@ def tsne(X,y,N, data_dir="data", n_actors=3):
     df_tsne.to_csv("{}/tsne.csv".format(data_dir))
     return df_tsne
 
-def plot(df_tsne, n_actors=3):
+def plot(df_tsne, data_dir="data", n_actors=3):
     # Create the figure
     fig = plt.figure( figsize=(8,8) )
     ax = fig.add_subplot(1, 1, 1, title='TSNE' )
@@ -202,11 +202,12 @@ def plot(df_tsne, n_actors=3):
             label="Actor {}".format(i))
 
     plt.legend()
+    plt.savefig("{}/tsne.pdf".format(data_dir))
     plt.show()
 
 
-data_dir="data_6_64"
-X, y, shape, N = generateData(filename="3-20180801-170454-gaurav-msi-64-2-", data_dir=data_dir, loading=True, N=20000, save_rate=20000)
+data_dir="data"
+X, y, shape, N = generateData(filename="3-20180804-203048-gaurav-4144-64-2-", data_dir=data_dir, loading=False, N=1500, save_rate=20000)
 X = X.view(N, shape).numpy()
 y = y.view(N).numpy()
 get_tsne = True
@@ -215,4 +216,4 @@ if get_tsne:
 
 df_tsne = pd.read_csv("{}/tsne.csv".format(data_dir), index_col=0)
 
-plot(df_tsne, n_actors=3)
+plot(df_tsne, data_dir, n_actors=3)
