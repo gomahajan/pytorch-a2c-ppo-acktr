@@ -193,10 +193,10 @@ def plot(df_tsne):
     plt.show()
 
 
-data_dir="data"
-X, shape, N = generateData(filename="20180801-220125-gaurav-4144-64-2-", data_dir=data_dir, loading=True, N=1000, save_rate=20000)
+data_dir="data-8"
+X, shape, N = generateData(filename="20180801-203140-gaurav-4144-8-2-", data_dir=data_dir, loading=False, N=1000, save_rate=20000)
 X = X.view(N, shape).numpy()
-get_tsne = False
+get_tsne = True
 if get_tsne:
     df_tsne = tsne(X,N, data_dir=data_dir)
 
