@@ -17,7 +17,7 @@ import pandas as pd
 from sklearn.manifold import TSNE
 
 parser = argparse.ArgumentParser(description='RL')
-parser.add_argument('--seed', type=int, default=2,
+parser.add_argument('--seed', type=int, default=3,
                     help='random seed (default: 1)')
 parser.add_argument('--num-stack', type=int, default=1,
                     help='number of frames to stack (default: 4)')
@@ -194,7 +194,7 @@ def plot(df_tsne):
 
 
 data_dir="data"
-X, shape, N = generateData(filename="20180801-203140-gaurav-4144-8-2-", data_dir=data_dir, loading=False, N=1000, save_rate=20000)
+X, shape, N = generateData(filename="20180804-172546-gaurav-4144-3", data_dir=data_dir, loading=False, N=1000, save_rate=20000)
 X = X.view(N, shape).numpy()
 get_tsne = True
 if get_tsne:
