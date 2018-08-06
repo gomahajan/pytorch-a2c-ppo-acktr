@@ -168,7 +168,7 @@ def tsne(X,N, data_dir="data"):
 def plot(df_tsne):
     # Create the figure
     fig = plt.figure( figsize=(8,8) )
-    ax = fig.add_subplot(1, 1, 1, title='TSNE' )
+    ax = fig.add_subplot(1, 1, 1, title='MLP-64' )
     # Create the scatter
     colors = [
     '#1f77b4',  # muted blue
@@ -190,13 +190,14 @@ def plot(df_tsne):
         cmap=plt.cm.get_cmap('Paired'),
         alpha=0.15)
 
+    plt.savefig("{}/nlinear.pdf".format("data-64"))
     plt.show()
 
 
-data_dir="data-8"
-X, shape, N = generateData(filename="20180801-203140-gaurav-4144-8-2-", data_dir=data_dir, loading=False, N=1000, save_rate=20000)
+data_dir="data-64"
+X, shape, N = generateData(filename="20180801-220125-gaurav-4144-64-2-", data_dir=data_dir, loading=True, N=1000, save_rate=20000)
 X = X.view(N, shape).numpy()
-get_tsne = True
+get_tsne = False
 if get_tsne:
     df_tsne = tsne(X,N, data_dir=data_dir)
 
