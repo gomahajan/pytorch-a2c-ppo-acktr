@@ -123,9 +123,8 @@ def plot(files, bin_size=100, smooth=1, split=True):
         y = np.delete(y, [i for i in range(min_v, y.shape[1])], axis=1)
         otx = otx[:][0:min_v]
 
-
+    ymax = np.amax(y)
     mean = np.mean(y, axis=0)
-    ymax = mean[-1]
     sd = 0.1*np.std(y, axis=0)
     cis = (mean - sd, mean + sd)
 
@@ -256,5 +255,5 @@ if __name__ == "__main__":
         plt.ylabel('Rewards')
         plt.title(game)
         plt.legend(loc=4)
-        plt.savefig("images/{}-linear.pdf".format(game))
+        #plt.savefig("images/{}-linear.pdf".format(game))
         print("Done printing for {}".format(game))
