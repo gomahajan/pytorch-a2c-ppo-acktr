@@ -123,8 +123,9 @@ def plot(files, bin_size=100, smooth=1, split=True):
         y = np.delete(y, [i for i in range(min_v, y.shape[1])], axis=1)
         otx = otx[:][0:min_v]
 
-    ymax = np.amax(y)
+
     mean = np.mean(y, axis=0)
+    ymax = mean[-1]
     sd = 0.1*np.std(y, axis=0)
     cis = (mean - sd, mean + sd)
 
@@ -234,17 +235,20 @@ if __name__ == "__main__":
         rseeds = "*"
         print("Starting printing for {}".format(game))
         #nlfcn_baseline(algo, game, plt)
-        #linear(algo,game,plt,color_defaults[0])
+        m = linear(algo,game,plt,color_defaults[0])
+        print("Linear: {}".format(m))
         m = lfcn(algo, game, plt, color_defaults[1])
         print("LFCN: {}".format(m))
-        m = nlfcn64("msi",algo, game, plt,color_defaults[2])
-        print("nl-fcn: {}".format(m))
-        m = scn16(algo,game,plt,color_defaults[3])
-        print("scn16: {}".format(m))
-        m = scn(algo,game,plt,color_defaults[4])
-        print("scn64: {}".format(m))
-        #nlinear16(algo,game,plt,color_defaults[5])
-        #nlinear64(algo, game, plt,color_defaults[6])
+        #m = nlfcn64("msi",algo, game, plt,color_defaults[2])
+        #print("nl-fcn: {}".format(m))
+        #m = scn16(algo,game,plt,color_defaults[3])
+        #print("scn16: {}".format(m))
+        #m = scn(algo,game,plt,color_defaults[4])
+        #print("scn64: {}".format(m))
+        m = nlinear16(algo,game,plt,color_defaults[5])
+        print("MLP-16: {}".format(m))
+        m = nlinear64(algo, game, plt,color_defaults[6])
+        print("MLP-64: {}".format(m))
 
         plt.xticks(ticks, tick_names)
         plt.xlim(0, num_steps * 1.01)
@@ -252,5 +256,5 @@ if __name__ == "__main__":
         plt.ylabel('Rewards')
         plt.title(game)
         plt.legend(loc=4)
-        plt.savefig("images/{}.pdf".format(game))
+        plt.savefig("images/{}-linear.pdf".format(game))
         print("Done printing for {}".format(game))
