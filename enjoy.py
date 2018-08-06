@@ -177,7 +177,7 @@ def tsne(X,y,N, data_dir="data", n_actors=3):
 def plot(df_tsne,data_dir, n_actors=3):
     # Create the figure
     fig = plt.figure( figsize=(8,8) )
-    ax = fig.add_subplot(1, 1, 1, title='t-SNE' )
+    ax = fig.add_subplot(1, 1, 1, title='nl-FCN-3' )
     # Create the scatter
     colors = [
     '#1f77b4',  # muted blue
@@ -202,19 +202,19 @@ def plot(df_tsne,data_dir, n_actors=3):
             label="Actor {}".format(i))
 
     plt.legend()
-    plt.savefig("{}/tsne.pdf".format(data_dir))
-    plt.show()
+    plt.savefig("{}/nl-fcn-3.pdf".format(data_dir))
+    #plt.show()
 
 
-data_dir="data_6_64"
+data_dir="data_3_64"
 files= ["6-20180731-211910-gaurav-msi-64-2-","3-20180801-170454-gaurav-msi-64-2-"]
-X, y, shape, N = generateData(filename=files[0], data_dir=data_dir, loading=False, N=1000, save_rate=20000)
+X, y, shape, N = generateData(filename=files[1], data_dir=data_dir, loading=True, N=1000, save_rate=20000)
 X = X.view(N, shape).numpy()
 y = y.view(N).numpy()
-get_tsne = True
+get_tsne = False
 if get_tsne:
     df_tsne = tsne(X,y,N, data_dir=data_dir)
 
 df_tsne = pd.read_csv("{}/tsne.csv".format(data_dir), index_col=0)
 
-plot(df_tsne,data_dir, n_actors=6)
+plot(df_tsne,data_dir, n_actors=3)
