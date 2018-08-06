@@ -220,7 +220,7 @@ def nlfcn_baseline(algo, game, plt,c):
         return m
 
 if __name__ == "__main__":
-    games = ["HalfCheetah-v2", "Hopper-v2", "Humanoid-v2", "InvertedDoublePendulum-v2","Swimmer-v2","Walker2d-v2"]
+    games = ["HalfCheetah-v2", "Hopper-v2", "Humanoid-v2", "InvertedDoublePendulum-v2", "InvertedPendulum-v2","Swimmer-v2","Walker2d-v2"]
     for game in games:
         algo = "ppo"
 
@@ -252,5 +252,5 @@ if __name__ == "__main__":
         plt.ylabel('Rewards')
         plt.title(game)
         plt.legend(loc=4)
-        #plt.savefig("images/{}.pdf".format(game))
+        plt.savefig("images/{}.pdf".format(game))
         print("Done printing for {}".format(game))
