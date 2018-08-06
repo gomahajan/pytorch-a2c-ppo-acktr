@@ -206,12 +206,12 @@ def plot(df_tsne,data_dir, n_actors=3):
     #plt.show()
 
 
-data_dir="data_3_64"
+data_dir="data_6_64"
 files= ["6-20180731-211910-gaurav-msi-64-2-","3-20180801-170454-gaurav-msi-64-2-"]
-X, y, shape, N = generateData(filename=files[1], data_dir=data_dir, loading=True, N=1000, save_rate=20000)
+X, y, shape, N = generateData(filename=files[0], data_dir=data_dir, loading=False, N=1000, save_rate=1)
 X = X.view(N, shape).numpy()
 y = y.view(N).numpy()
-get_tsne = False
+get_tsne = True
 if get_tsne:
     df_tsne = tsne(X,y,N, data_dir=data_dir)
 
