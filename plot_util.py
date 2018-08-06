@@ -123,89 +123,101 @@ def plot(files, bin_size=100, smooth=1, split=True):
         y = np.delete(y, [i for i in range(min_v, y.shape[1])], axis=1)
         otx = otx[:][0:min_v]
 
+    ymax = np.amax(y)
     mean = np.mean(y, axis=0)
     sd = 0.1*np.std(y, axis=0)
     cis = (mean - sd, mean + sd)
 
-    return otx, mean, cis
+    return otx, mean, cis, ymax
 
 
 def linear(algo, game, plt, c):
     infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/linear/graphs/{}/{}/'.format(algo,game)+'*0.monitor.csv')
     if len(infiles) > 0:
-        tx, mean, cis = plot(infiles, smooth=1, split=False)
+        tx, mean, cis, m = plot(infiles, smooth=1, split=False)
         plt.fill_between(tx, cis[0], cis[1], alpha=0.5, color=c)
         plt.plot(tx, mean, label="Linear", color=c)
+        return m
 
 def scn(algo, game, plt, c):
     infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/scn/graphs/{}/{}/'.format(algo,game)+'*0.monitor.csv')
     if len(infiles) > 0:
-        tx, mean, cis = plot(infiles, smooth=1, split=False)
+        tx, mean, cis, m = plot(infiles, smooth=1, split=False)
         plt.fill_between(tx, cis[0], cis[1], alpha=0.5, color=c)
         plt.plot(tx, mean, label="SCN-64", color=c)
+        return m
 
 def scn16(algo, game, plt,c):
     infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/scn16/graphs/{}/{}/'.format(algo,game)+'*0.monitor.csv')
-    tx, mean, cis = plot(infiles, smooth=1, split=False)
+    tx, mean, cis, m = plot(infiles, smooth=1, split=False)
     plt.fill_between(tx, cis[0], cis[1], alpha=0.5, color=c)
     plt.plot(tx, mean, label="SCN-16", color=c)
+    return m
 
 
 def nlfcn64(pcn, algo, game, plt,c):
     infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/fcn/graphs/{}/{}/'.format(algo,game)+'6*{}*64*{}-0.monitor.csv'.format(pcn, rseeds))
     if len(infiles) > 0:
-        tx, mean, cis = plot(infiles, smooth=1, split=False)
+        tx, mean, cis, m = plot(infiles, smooth=1, split=False)
         plt.fill_between(tx, cis[0], cis[1], alpha=0.5, color=c)
         plt.plot(tx, mean, label="nl-FCN with 6 actors", color=c)
+        return m
 
 def lfcn(algo, game, plt,c):
     infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/lfcn/graphs/{}/{}/'.format(algo,game)+'*.monitor.csv')
     if len(infiles) > 0:
-        tx, mean, cis = plot(infiles, smooth=1, split=False)
+        tx, mean, cis, m = plot(infiles, smooth=1, split=False)
         plt.fill_between(tx, cis[0], cis[1], alpha=0.5, color=c)
         plt.plot(tx, mean, label="l-FCN with 3 actors", color=c)
+        return m
 
 def nlfcn16(algo, game, plt,c):
     infiles = glob.glob('/home/gaurav/GitRepo/results/fcn/graphs/{}/{}/'.format(algo,game)+'*{}*16*{}-0.monitor.csv'.format(pc, rseeds))
     if len(infiles) > 0:
-        tx, mean, cis = plot(infiles, smooth=1, split=False)
+        tx, mean, cis, m = plot(infiles, smooth=1, split=False)
         plt.fill_between(tx, cis[0], cis[1], alpha=0.5, color=c)
         plt.plot(tx, mean, label="nlfcn policy using 6 actors 16 hidden units", color=c)
+        return m
 
 def nlfcn32(algo, game, plt,c):
     infiles = glob.glob('/home/gaurav/GitRepo/results/fcn/graphs/{}/{}/'.format(algo,game)+'*{}*32*{}-0.monitor.csv'.format(pc, rseeds))
     if len(infiles) > 0:
-        tx, mean, cis = plot(infiles, smooth=1, split=False)
+        tx, mean, cis, m = plot(infiles, smooth=1, split=False)
         plt.fill_between(tx, cis[0], cis[1], alpha=0.5, color=c)
         plt.plot(tx, mean, label="nlfcn policy using 6 actors 32 hidden units", color=c)
+        return m
 
 
 def nlfcn8(algo, game, plt,c):
     infiles = glob.glob('/home/gaurav/GitRepo/results/fcn/graphs/{}/{}/'.format(algo,game)+'*{}*8*{}-0.monitor.csv'.format(pc, rseeds))
     if len(infiles) > 0:
-        tx, mean, cis = plot(infiles, smooth=1, split=False)
+        tx, mean, cis, m = plot(infiles, smooth=1, split=False)
         plt.fill_between(tx, cis[0], cis[1], alpha=0.5, color=c)
         plt.plot(tx, mean, label="nlfcn policy using 6 actors 8 hidden units", color=c)
+        return m
 
 def nlinear16(algo, game, plt,c):
     infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/nlinear/graphs/{}/{}/'.format(algo,game)+'*{}*16*{}-0.monitor.csv'.format(pc, rseeds))
-    tx, mean, cis = plot(infiles, smooth=1, split=False)
+    tx, mean, cis, m = plot(infiles, smooth=1, split=False)
     plt.fill_between(tx, cis[0], cis[1], alpha=0.5, color=c)
     plt.plot(tx, mean, label="MLP-16", color=c)
+    return m
 
 def nlinear64(algo, game, plt,c):
     infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/nlinear/graphs/{}/{}/'.format(algo,game)+'*{}*64*{}-0.monitor.csv'.format(pc, rseeds))
-    tx, mean, cis = plot(infiles, smooth=1, split=False)
+    tx, mean, cis, m = plot(infiles, smooth=1, split=False)
     plt.fill_between(tx, cis[0], cis[1], alpha=0.5, color=c )
     plt.plot(tx, mean, label="MLP-64", color=c)
+    return m
 
 
 def nlfcn_baseline(algo, game, plt,c):
     infiles = glob.glob('/home/gaurav/GitRepo/fpn/nlfpn/graphs/{}/{}/'.format(algo,game)+'baseline-[12]-0.monitor.csv')
     if len(infiles) > 0:
-        tx, mean, cis = plot(infiles, smooth=1, split=False)
+        tx, mean, cis, m = plot(infiles, smooth=1, split=False)
         plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
         plt.plot(tx, mean, label="baseline nlfcn policy using 6 actors 64 hidden units", color=c)
+        return m
 
 if __name__ == "__main__":
     games = ["HalfCheetah-v2", "Hopper-v2", "Humanoid-v2", "InvertedDoublePendulum-v2","Swimmer-v2","Walker2d-v2"]
@@ -223,10 +235,14 @@ if __name__ == "__main__":
         print("Starting printing for {}".format(game))
         #nlfcn_baseline(algo, game, plt)
         #linear(algo,game,plt,color_defaults[0])
-        lfcn(algo, game, plt, color_defaults[1])
-        nlfcn64("msi",algo, game, plt,color_defaults[2])
-        scn16(algo,game,plt,color_defaults[3])
-        scn(algo,game,plt,color_defaults[4])
+        m = lfcn(algo, game, plt, color_defaults[1])
+        print("LFCN: {}".format(m))
+        m = nlfcn64("msi",algo, game, plt,color_defaults[2])
+        print("nl-fcn: {}".format(m))
+        m = scn16(algo,game,plt,color_defaults[3])
+        print("scn16: {}".format(m))
+        m = scn(algo,game,plt,color_defaults[4])
+        print("scn64: {}".format(m))
         #nlinear16(algo,game,plt,color_defaults[5])
         #nlinear64(algo, game, plt,color_defaults[6])
 
@@ -236,5 +252,5 @@ if __name__ == "__main__":
         plt.ylabel('Rewards')
         plt.title(game)
         plt.legend(loc=4)
-        plt.savefig("images/{}.pdf".format(game))
+        #plt.savefig("images/{}.pdf".format(game))
         print("Done printing for {}".format(game))
