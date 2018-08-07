@@ -32,12 +32,13 @@ parser.add_argument('--add-timestep', action='store_true', default=False,
 args = parser.parse_args()
 
 
-def generateData(filename="3-20180801-170454-gaurav-msi-64-2-", data_dir="data", N= 1000, loading=True, save_rate=1):
-    env = make_env(args.env_name, args.seed, 0, "{}-0-".format(args.env_name), args.add_timestep)
+def generateData(filename="3-20180801-170454-gaurav-msi-64-2-", data_dir="data", N= 1000, loading=True, save_rate=1, fileSave="abc", env_name="abc"):
+    args.env_name = env_name
+    env = make_env(args.env_name, args.seed, 0, fileSave, args.add_timestep)
     env = DummyVecEnv([env])
 
     actor_critic, ob_rms = \
-                torch.load(os.path.join(os.path.join(args.load_dir, args.env_name), filename + ".pt"))
+                torch.load("trained_models/ppo/{}/3-*-2-.pt"))
 
 
     if len(env.observation_space.shape) == 1:
@@ -105,7 +106,7 @@ def generateData(filename="3-20180801-170454-gaurav-msi-64-2-", data_dir="data",
 
             cpu_actions = action.squeeze(1).cpu().numpy()
             #print("Actions: {} for choice {}".format(action, choice))
-            print("Choice {} with probability {}".format(choice, torch.exp(choice_log_probs)))
+            #print("Choice {} with probability {}".format(choice, torch.exp(choice_log_probs)))
             # Obser reward and next obs
             obs, reward, done, _ = env.step(cpu_actions)
 
@@ -204,17 +205,3 @@ def plot(df_tsne,data_dir, n_actors=3):
     plt.legend()
     #plt.savefig("{}/nl-fcn-3.pdf".format(data_dir))
     plt.show()
-
-
-data_dir="data_6_64"
-files= ["6-20180731-211910-gaurav-msi-64-2-","3-20180801-170454-gaurav-msi-64-2-"]
-X, y, shape, N = generateData(filename=files[0], data_dir=data_dir, loading=True, N=1000, save_rate=1)
-X = X.view(N, shape).numpy()
-y = y.view(N).numpy()
-get_tsne = False
-if get_tsne:
-    df_tsne = tsne(X,y,N, data_dir=data_dir)
-
-df_tsne = pd.read_csv("{}/tsne.csv".format(data_dir), index_col=0)
-
-plot(df_tsne,data_dir, n_actors=3)
