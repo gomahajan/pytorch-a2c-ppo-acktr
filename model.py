@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from distributions import Categorical, DiagGaussian
 from utils import init, init_normc_
+import numpy as np
 
 class Flatten(nn.Module):
     def forward(self, x):
@@ -230,7 +231,7 @@ class FactoredMLPBase(nn.Module):
         hidden_decision = self.decider(inputs)
         ddist = self.ddist(hidden_decision)
         choice = ddist.sample()
-
+        choice.data.fill_(2)
         choice_log_probs = ddist.log_probs(choice)
 
         return self.critic_linear(hidden_critic), self.actors, states, ddist, choice, choice_log_probs

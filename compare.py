@@ -2,6 +2,7 @@ import argparse
 import os
 import types
 import matplotlib.pyplot as plt
+import glob
 
 import numpy as np
 import torch
@@ -32,12 +33,14 @@ parser.add_argument('--add-timestep', action='store_true', default=False,
 args = parser.parse_args()
 
 
-def generateData(filename="3-20180801-170454-gaurav-msi-64-2-", data_dir="data", N= 1000, loading=True, save_rate=1):
-    env = make_env(args.env_name, args.seed, 0, "{}-0-".format(args.env_name), args.add_timestep)
+def generateData(N= 1000, loading=True, save_rate=1, fileSave="abc", env_name="abc"):
+    args.env_name = env_name
+    env = make_env(args.env_name, args.seed, 0, fileSave, args.add_timestep)
     env = DummyVecEnv([env])
 
+    infiles = glob.glob("trained_models/ppo/{}/3-*-2-.pt".format(args.env_name))
     actor_critic, ob_rms = \
-                torch.load(os.path.join(os.path.join(args.load_dir, args.env_name), filename + ".pt"))
+                torch.load(infiles[0])
 
 
     if len(env.observation_space.shape) == 1:
@@ -71,11 +74,9 @@ def generateData(filename="3-20180801-170454-gaurav-msi-64-2-", data_dir="data",
         current_obs[:, -shape_dim0:] = obs
 
     if not loading:
-        render_func('human')
+        #render_func('human')
         obs = env.reset()
         update_current_obs(obs)
-
-        time.sleep(5)
 
         if args.env_name.find('Bullet') > -1:
             import pybullet as p
@@ -105,7 +106,7 @@ def generateData(filename="3-20180801-170454-gaurav-msi-64-2-", data_dir="data",
 
             cpu_actions = action.squeeze(1).cpu().numpy()
             #print("Actions: {} for choice {}".format(action, choice))
-            print("Choice {} with probability {}".format(choice, torch.exp(choice_log_probs)))
+            #print("Choice {} with probability {}".format(choice, torch.exp(choice_log_probs)))
             # Obser reward and next obs
             obs, reward, done, _ = env.step(cpu_actions)
 
@@ -124,7 +125,7 @@ def generateData(filename="3-20180801-170454-gaurav-msi-64-2-", data_dir="data",
                     humanPos, humanOrn = p.getBasePositionAndOrientation(torsoId)
                     p.resetDebugVisualizerCamera(distance, yaw, -20, humanPos)
 
-            render_func('human')
+            #render_func('human')
 
             if i % save_rate == 0:
                 W, H = 500, 700
@@ -132,16 +133,12 @@ def generateData(filename="3-20180801-170454-gaurav-msi-64-2-", data_dir="data",
                 root = dsp.screen().root
                 raw = root.get_image(500, 150, W, H, X.ZPixmap, 0xffffffff)
                 image = Image.frombytes("RGB", (W, H), raw.data, "raw", "BGRX")
-                image.save("{}/images/img{}.png".format(data_dir, i), "PNG")
+                #image.save("{}/images/img{}.png".format(data_dir, i), "PNG")
 
-        np.savetxt("{}/X.csv".format(data_dir), Xs.numpy())
-        np.savetxt("{}/y.csv".format(data_dir), y.numpy())
-
-    else:
-        Xs = torch.Tensor(np.loadtxt("{}/X.csv".format(data_dir)))
-        y = torch.Tensor(np.loadtxt("{}/y.csv".format(data_dir)))
-
-    return Xs, y, obs_shape[0], N
+        #np.savetxt("{}/X.csv".format(data_dir), Xs.numpy())
+        #np.savetxt("{}/y.csv".format(data_dir), y.numpy())
+        #Xs = torch.Tensor(np.loadtxt("{}/X.csv".format(data_dir)))
+        #y = torch.Tensor(np.loadtxt("{}/y.csv".format(data_dir)))
 
 
 def tsne(X,y,N, data_dir="data", n_actors=3):
@@ -204,17 +201,3 @@ def plot(df_tsne,data_dir, n_actors=3):
     plt.legend()
     #plt.savefig("{}/nl-fcn-3.pdf".format(data_dir))
     plt.show()
-
-
-data_dir="data_6_64"
-files= ["6-20180731-211910-gaurav-msi-64-2-","3-20180801-170454-gaurav-msi-64-2-"]
-X, y, shape, N = generateData(filename=files[0], data_dir=data_dir, loading=True, N=1000, save_rate=1)
-X = X.view(N, shape).numpy()
-y = y.view(N).numpy()
-get_tsne = False
-if get_tsne:
-    df_tsne = tsne(X,y,N, data_dir=data_dir)
-
-df_tsne = pd.read_csv("{}/tsne.csv".format(data_dir), index_col=0)
-
-plot(df_tsne,data_dir, n_actors=3)

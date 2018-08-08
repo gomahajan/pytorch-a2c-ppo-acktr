@@ -10,6 +10,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import medfilt
+from compare import generateData
 
 matplotlib.rcParams.update({'font.size': 8})
 
@@ -72,10 +73,9 @@ def load_data(indir, smooth, bin_size):
         timesteps += datas[i][1]
 
     if len(result) < bin_size:
-        return [None, None]
+        bin_size = len(result)
 
     x, y = np.array(result)[:, 0], np.array(result)[:, 1]
-    #plt.scatter(x, y, alpha=0.2, s=2)
 
     if smooth == 1:
         x, y = smooth_reward_curve(x, y)
@@ -101,72 +101,52 @@ color_defaults = [
 ]
 
 
-def plot(files, bin_size=100, smooth=1, split=True):
+def plot(files, bin_size=10, smooth=1, split=True):
     tys = []
     otx = None
-    max_v = 0
+    min_v = 100000000
     for file in files:
         tx, ty = load_data(file, smooth, bin_size)
         if tx is None or ty is None:
             continue
-        if len(tx) > max_v:
+        if len(tx) <= min_v:
             otx = tx
-            max_v = len(tx)
+            min_v = len(tx)
         tys.append(ty)
 
-    y = np.zeros([len(tys), len(max(tys, key=lambda x: len(x)))])
+    l = len(min(tys, key=lambda x: len(x)))
+    y = np.zeros([len(tys), l])
     for i, j in enumerate(tys):
-        y[i][0:len(j)] = j
+        y[i][0:l] = j[0:l]
 
     if split:
-        max_v = max_v // 2
-        y = np.delete(y, [i for i in range(max_v, y.shape[1])], axis=1)
-        otx = otx[:][0:max_v]
+        min_v = min_v // 2
+        y = np.delete(y, [i for i in range(min_v, y.shape[1])], axis=1)
+        otx = otx[:][0:min_v]
 
+    ymax = np.amax(y)
     mean = np.mean(y, axis=0)
-    sd = np.std(y, axis=0)
+    ylast = mean[-1]
+    sd = 0.1*np.std(y, axis=0)
     cis = (mean - sd, mean + sd)
 
-    return otx, mean, cis
+    return otx, mean, cis, ymax, ylast
 
+
+def lfcn(game, file):
+    infiles = glob.glob('{}*.monitor.csv'.format(file))
+    if len(infiles) > 0:
+        tx, mean, cis, m, l = plot(infiles, smooth=3, split=False)
+        return m,l
 
 if __name__ == "__main__":
-    game = "Walker2d-v2"
-    algo = "ppo"
-    num_steps = 2000000
-    fig = plt.figure()
-    nums = [1, 2, 3, 6]
-    #nums = [1]
+    games = ["HalfCheetah-v2", "Hopper-v2", "Humanoid-v2", "InvertedDoublePendulum-v2", "InvertedPendulum-v2","Swimmer-v2","Walker2d-v2"]
+    for game in games:
+        algo = "ppo"
 
-    for num in nums:
-        infiles = glob.glob('./graphs/{}/{}/{}'.format(algo, game, num) + '*.monitor.csv')
-        if len(infiles) > 0:
-            tx, mean, cis = plot(infiles, smooth=1, split=False)
-            plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
-            plt.plot(tx, mean, label="{} with {} actor(s)".format(algo, num))
-
-    #infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/base/graphs/{}/{}/2'.format(algo, game) + '*.monitor.csv')
-    #if len(infiles) > 0:
-    #    tx, mean, cis = plot(infiles, smooth=1, split=False)
-    #    plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
-    #    plt.plot(tx, mean, label="{} with non-learn policy".format(algo))
-
-    #infiles = glob.glob('/tmp/openai-2018-07-19-13-09-23-129882/' + '*.monitor.csv')
-    #if len(infiles) > 0:
-    #    tx, mean, cis = plot(infiles, smooth=1, split=False)
-    #    plt.fill_between(tx, cis[0], cis[1], alpha=0.5)
-    #    plt.plot(tx, mean, label="{} with tensorflow linear policy".format(algo))
-
-    tick_fractions = np.array([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
-    ticks = tick_fractions * num_steps
-    tick_names = ["{:.1e}".format(tick) for tick in ticks]
-    #tick_names = ["{}".format(tick) for tick in tick_fractions]
-    plt.xticks(ticks, tick_names)
-    plt.xlim(0, num_steps * 1.01)
-
-    plt.xlabel('Number of Timesteps (M)')
-    plt.ylabel('Rewards')
-
-    plt.title(game)
-    plt.legend(loc=4)
-    plt.show()
+        data_dir = "data"
+        file = 'test/{}-'.format(game)
+        generateData(loading=False, N=3000,
+                                      save_rate=1000000000, fileSave=file, env_name=game)
+        m,l = lfcn(game, file)
+        print("{}: {} and mean {}".format(game, m,l))
