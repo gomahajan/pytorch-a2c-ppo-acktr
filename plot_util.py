@@ -101,7 +101,7 @@ color_defaults = [
 ]
 
 
-def plot(files, bin_size=10, smooth=1, split=True):
+def plot(files, bin_size=2, smooth=1, split=True):
     tys = []
     otx = None
     min_v = 100000000
@@ -136,17 +136,38 @@ def plot(files, bin_size=10, smooth=1, split=True):
 def lfcn(game, file):
     infiles = glob.glob('{}*.monitor.csv'.format(file))
     if len(infiles) > 0:
-        tx, mean, cis, m, l = plot(infiles, smooth=3, split=False)
+        tx, mean, cis, m, l = plot(infiles, smooth=1, split=False)
         return m,l
 
 if __name__ == "__main__":
-    games = ["HalfCheetah-v2", "Hopper-v2", "Humanoid-v2", "InvertedDoublePendulum-v2", "InvertedPendulum-v2","Swimmer-v2","Walker2d-v2"]
-    for game in games:
-        algo = "ppo"
+    scna = np.array([2624/2885, 649/2885, 292/2885])*100
+    scns = np.array([1980/2885, 423/2885, 159/2885])*100
+    lfcna = np.array([2446/2585, 1051/2585,456/2585])*100
+    lfcns = np.array([2075/2585, 403/2585, 208/2585])*100
 
-        data_dir = "data"
-        file = 'test/{}-'.format(game)
-        generateData(loading=False, N=3000,
-                                      save_rate=1000000000, fileSave=file, env_name=game)
-        m,l = lfcn(game, file)
-        print("{}: {} and mean {}".format(game, m,l))
+    fig1 = plt.figure(1)
+    plt.plot(scna, label="SCN action noise", color="r", marker="v")
+    plt.plot(scns, label="SCN state noise", color="r", marker="o")
+    plt.plot(lfcna, label="l-FCN action noise", color="b", marker="v")
+    plt.plot(lfcns, label="l-FCN state noise", color="b", marker="o")
+
+    print(np.arange(0, 2, step=0.2))
+    plt.xticks([0,1, 2], ("0.1", "0.5", "1.0"))
+    plt.ylim(0, 101)
+    plt.legend()
+    plt.xlabel('Injected noise STD')
+    plt.ylabel('Resulting performance (%)')
+    plt.show()
+
+#games = ["HalfCheetah-v2", "Hopper-v2", "Humanoid-v2", "InvertedDoublePendulum-v2", "InvertedPendulum-v2","Swimmer-v2","Walker2d-v2"]
+    #for game in games:
+    #    algo = "ppo"
+
+    #    data_dir = "data"
+    #    tl = 0
+    #    for seed in range(1,6):
+    #        file = 'test/{}-{}-'.format(game, seed)
+    #        generateData(loading=False, N=5000,save_rate=1000000000, fileSave=file, env_name=game, seed=seed)
+    #        m,l = lfcn(game, file)
+    #        tl = tl + l
+    #    print("{}: mean {}".format(game,tl/5))

@@ -33,12 +33,13 @@ parser.add_argument('--add-timestep', action='store_true', default=False,
 args = parser.parse_args()
 
 
-def generateData(N= 1000, loading=True, save_rate=1, fileSave="abc", env_name="abc"):
+def generateData(N= 1000, loading=True, save_rate=1, fileSave="abc", env_name="abc", seed=1):
     args.env_name = env_name
+    args.seed = seed
     env = make_env(args.env_name, args.seed, 0, fileSave, args.add_timestep)
     env = DummyVecEnv([env])
 
-    infiles = glob.glob("trained_models/ppo/{}/3-*-2-.pt".format(args.env_name))
+    infiles = glob.glob("trained_models/ppo/{}/3-*-{}-.pt".format(args.env_name, seed))
     actor_critic, ob_rms = \
                 torch.load(infiles[0])
 
@@ -92,6 +93,8 @@ def generateData(N= 1000, loading=True, save_rate=1, fileSave="abc", env_name="a
 
         while True:
             with torch.no_grad():
+                #print(torch.Tensor(np.random.normal(0, 0.5, current_obs.shape)))
+                #current_obs = current_obs + torch.Tensor(np.random.normal(0, 1, current_obs.shape))
                 value, action, choice, _, choice_log_probs, states = actor_critic.act(current_obs,
                                                             states,
                                                             masks,
@@ -104,6 +107,7 @@ def generateData(N= 1000, loading=True, save_rate=1, fileSave="abc", env_name="a
             if i % N == 0:
                 break
 
+            action = action + torch.Tensor(np.random.normal(0, 0.5, action.shape))
             cpu_actions = action.squeeze(1).cpu().numpy()
             #print("Actions: {} for choice {}".format(action, choice))
             #print("Choice {} with probability {}".format(choice, torch.exp(choice_log_probs)))
