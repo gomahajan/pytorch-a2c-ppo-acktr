@@ -1,7 +1,9 @@
 import argparse
 import os
 import types
+import matplotlib
 import matplotlib.pyplot as plt
+matplotlib.rcParams.update({'font.size': 15})
 
 import numpy as np
 import torch
@@ -198,11 +200,11 @@ def plot(df_tsne, data_dir="data", n_actors=3):
             y=df_tsne.loc[df_tsne['label'] == float(i)]['y-tsne'],
             c=colors[i],
             cmap=plt.cm.get_cmap('Paired'),
-            alpha=0.15,
+            alpha=0.5,
             label="Actor {}".format(i))
 
     plt.legend()
-    plt.savefig("{}/l-fcn-3.pdf".format(data_dir))
+    plt.savefig("{}/l-fcn-3.pdf".format(data_dir), bbox_inches="tight")
     #plt.show()
 
 
