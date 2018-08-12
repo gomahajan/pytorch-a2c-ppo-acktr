@@ -205,7 +205,10 @@ class FactoredMLPBase(nn.Module):
 
         for i in range(0,self.num_actors):
             self.actors.append(nn.Sequential(
-                init_(nn.Linear(num_inputs, 64))
+                init_(nn.Linear(num_inputs, 16)),
+                nn.Tanh(),
+                init_(nn.Linear(16, 16)),
+                nn.Tanh()
             ))
 
         self.critic = nn.Sequential(
@@ -225,7 +228,7 @@ class FactoredMLPBase(nn.Module):
 
     @property
     def output_size(self):
-        return 64
+        return 16
 
     def forward(self, inputs, states, masks):
         hidden_critic = self.critic(inputs)
