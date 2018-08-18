@@ -38,7 +38,7 @@ class Policy(nn.Module):
         raise NotImplementedError
 
     def act(self, inputs, states, masks, deterministic=False):
-        value, actor_features, states = self.base(inputs, states, masks)
+        value, actor_features, states, e1, e2 = self.base(inputs, states, masks)
         dist = self.dist(actor_features)
 
         if deterministic:
@@ -60,14 +60,14 @@ class Policy(nn.Module):
         linear_ap = np.linalg.inv(Xt * X).dot(Xt) * Y
         #print(linear_ap.shape)
 
-        return value, action, action_log_probs, states, linear_ap
+        return value, action, action_log_probs, states, e1, e2
 
     def get_value(self, inputs, states, masks):
-        value, _, _ = self.base(inputs, states, masks)
+        value, _, _, _, _ = self.base(inputs, states, masks)
         return value
 
     def evaluate_actions(self, inputs, states, masks, action):
-        value, actor_features, states = self.base(inputs, states, masks)
+        value, actor_features, states, _, _ = self.base(inputs, states, masks)
         dist = self.dist(actor_features)
 
         action_log_probs = dist.log_probs(action)
@@ -179,6 +179,18 @@ class MLPBase(nn.Module):
 
     def forward(self, inputs, states, masks):
         hidden_critic = self.critic(inputs)
-        hidden_actor = self.actor(inputs)
+        #hidden_actor = self.actor(inputs)
 
-        return self.critic_linear(hidden_critic), hidden_actor, states
+        modulelist = list(self.actor.modules())
+        #print(len(modulelist))
+        #print(inputs.shape)
+        #import pdb;
+        #pdb.set_trace()
+        bh1 = modulelist[1](inputs)
+        ah1 = modulelist[2](bh1)
+        effect1 = torch.abs(ah1-bh1)
+        bh2 = modulelist[3](ah1)
+        ah2 = modulelist[4](bh2)
+        effect2 = torch.abs(ah2-bh2)
+
+        return self.critic_linear(hidden_critic), ah2, states, effect1, effect2

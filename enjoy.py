@@ -15,6 +15,7 @@ from PIL import Image  # PIL
 import time
 import pandas as pd
 from sklearn.manifold import TSNE
+import pdb;
 
 parser = argparse.ArgumentParser(description='RL')
 parser.add_argument('--seed', type=int, default=2,
@@ -87,17 +88,19 @@ def generateData(filename="3-20180801-170454-gaurav-msi-64-2-", data_dir="data",
 
         Xs = torch.empty(N, current_obs.shape[1])
         i = 0
-        lins = []
+        e1s = []
+        e2s = []
 
         while True:
             with torch.no_grad():
-                value, action, _, states, lin = actor_critic.act(current_obs,
+                value, action, _, states, e1, e2 = actor_critic.act(current_obs,
                                                             states,
                                                             masks,
                                                             deterministic=True)
 
             Xs[i] = current_obs
-            lins.append(lin.reshape(1,-1))
+            e1s.append(e1.reshape(1,-1).numpy())
+            e2s.append(e2.reshape(1, -1).numpy())
             i = i+1
 
             if i % N == 0:
@@ -137,7 +140,7 @@ def generateData(filename="3-20180801-170454-gaurav-msi-64-2-", data_dir="data",
     else:
         Xs = torch.Tensor(np.loadtxt("{}/X.csv".format(data_dir)))
 
-    return Xs, obs_shape[0], N, lins
+    return Xs, obs_shape[0], N, e1s, e2s
 
 
 def tsne(X,N, data_dir="data"):
@@ -197,35 +200,44 @@ def plot(df_tsne):
 
 
 data_dir="data-64"
-#X, shape, N, lins = generateData(filename="20180801-220125-gaurav-4144-64-2-", data_dir=data_dir, loading=False, N=1000, save_rate=20000)
+#X, shape, N, e1s, e2s = generateData(filename="20180801-220125-gaurav-4144-64-2-", data_dir=data_dir, loading=False, N=1000, save_rate=20000)
 N = 1000
-#lins = np.asarray(lins).reshape(N, -1)
-#np.savetxt("{}/lins.csv".format(data_dir), lins)
-lins = np.loadtxt("{}/lins.csv".format(data_dir))
-#print(lins.shape)
+epsilon = 0.2
 
-mins = []
-for i in range(0, N):
-    c_min = 100000
-    for j in range(0, N):
-        if i == j:
-            continue
+e1s = np.loadtxt("{}/e1s.csv".format(data_dir))
+e2s = np.loadtxt("{}/e2s.csv".format(data_dir))
 
-        dist = lins[i]-lins[j]
-        #print(dist.shape)
-        c = np.linalg.norm(dist)
-        if c< c_min:
-            c_min = c
+e2s = (e2s > epsilon).astype(int)
+e1s = (e1s > epsilon).astype(int)
 
-    mins.append(c_min)
+b1s = []
+for b in e1s:
+    b1s.append(b.dot(1 << np.arange(b.size)[::-1]))
 
-print(np.amin(mins))
+b2s = []
+for b in e2s:
+    b2s.append(b.dot(1 << np.arange(b.size)[::-1]))
+
+
+
+unique_e1s, counts = np.unique(e1s, axis=0, return_counts=True)
 
 fig = plt.figure()
-plt.plot(mins)
-plt.ylabel('Distance')
-plt.title("MLP-64")
-plt.savefig("{}/nlinear_dist.pdf".format("data-64"), bbox_inches="tight")
+x = np.arange(unique_e1s.shape[0])
+plt.bar(x, counts)
+plt.ylabel('Frequency')
+plt.xlabel('Activation Index')
+plt.title("Activations for Layer 1")
+plt.savefig("{}/nlinear_dist1.pdf".format("data-64"), bbox_inches="tight")
+plt.show()
+
+unique_e2s, counts = np.unique(e2s, axis=0, return_counts=True)
+x = np.arange(unique_e2s.shape[0])
+plt.bar(x, counts)
+plt.ylabel('Frequency')
+plt.xlabel('Activation Index')
+plt.title("Activations for Layer 2")
+plt.savefig("{}/nlinear_dist2.pdf".format("data-64"), bbox_inches="tight")
 plt.show()
 
 #X = X.view(N, shape).numpy()
