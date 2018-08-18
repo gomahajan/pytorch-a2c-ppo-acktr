@@ -75,7 +75,7 @@ def generateData(filename="3-20180801-170454-gaurav-msi-64-2-", data_dir="data",
         obs = env.reset()
         update_current_obs(obs)
 
-        time.sleep(5)
+        #time.sleep(5)
 
         if args.env_name.find('Bullet') > -1:
             import pybullet as p
@@ -87,15 +87,17 @@ def generateData(filename="3-20180801-170454-gaurav-msi-64-2-", data_dir="data",
 
         Xs = torch.empty(N, current_obs.shape[1])
         i = 0
+        lins = []
 
         while True:
             with torch.no_grad():
-                value, action, _, states = actor_critic.act(current_obs,
+                value, action, _, states, lin = actor_critic.act(current_obs,
                                                             states,
                                                             masks,
                                                             deterministic=True)
 
             Xs[i] = current_obs
+            lins.append(lin.reshape(1,-1))
             i = i+1
 
             if i % N == 0:
@@ -135,7 +137,7 @@ def generateData(filename="3-20180801-170454-gaurav-msi-64-2-", data_dir="data",
     else:
         Xs = torch.Tensor(np.loadtxt("{}/X.csv".format(data_dir)))
 
-    return Xs, obs_shape[0], N
+    return Xs, obs_shape[0], N, lins
 
 
 def tsne(X,N, data_dir="data"):
@@ -190,17 +192,48 @@ def plot(df_tsne):
         cmap=plt.cm.get_cmap('Paired'),
         alpha=0.15)
 
-    plt.savefig("{}/nlinear.pdf".format("data-64"))
+    #plt.savefig("{}/nlinear.pdf".format("data-64"))
     plt.show()
 
 
 data_dir="data-64"
-X, shape, N = generateData(filename="20180801-220125-gaurav-4144-64-2-", data_dir=data_dir, loading=True, N=1000, save_rate=20000)
-X = X.view(N, shape).numpy()
+#X, shape, N, lins = generateData(filename="20180801-220125-gaurav-4144-64-2-", data_dir=data_dir, loading=False, N=1000, save_rate=20000)
+N = 1000
+#lins = np.asarray(lins).reshape(N, -1)
+#np.savetxt("{}/lins.csv".format(data_dir), lins)
+lins = np.loadtxt("{}/lins.csv".format(data_dir))
+#print(lins.shape)
+
+mins = []
+for i in range(0, N):
+    c_min = 100000
+    for j in range(0, N):
+        if i == j:
+            continue
+
+        dist = lins[i]-lins[j]
+        #print(dist.shape)
+        c = np.linalg.norm(dist)
+        if c< c_min:
+            c_min = c
+
+    mins.append(c_min)
+
+print(np.amin(mins))
+
+fig = plt.figure()
+plt.plot(mins)
+plt.ylabel('Distance')
+plt.title("MLP-64")
+plt.savefig("{}/nlinear_dist.pdf".format("data-64"), bbox_inches="tight")
+plt.show()
+
+#X = X.view(N, shape).numpy()
+X = lins
 get_tsne = False
 if get_tsne:
     df_tsne = tsne(X,N, data_dir=data_dir)
 
 df_tsne = pd.read_csv("{}/tsne.csv".format(data_dir), index_col=0)
 
-plot(df_tsne)
+#plot(df_tsne)

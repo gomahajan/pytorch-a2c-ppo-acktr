@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from distributions import Categorical, DiagGaussian
 from utils import init, init_normc_
+import numpy as np
 
 
 class Flatten(nn.Module):
@@ -48,7 +49,18 @@ class Policy(nn.Module):
         action_log_probs = dist.log_probs(action)
         dist_entropy = dist.entropy().mean()
 
-        return value, action, action_log_probs, states
+        X = inputs.numpy()
+        Y = actor_features.numpy()
+        Xt = X.transpose()
+        xtxinv = np.linalg.inv(Xt * X)
+        #print("inv {}".format(xtxinv.shape))
+        #("xt {}".format(Xt.shape))
+        #print("inv xt {}".format((xtxinv.dot(Xt)).shape))
+
+        linear_ap = np.linalg.inv(Xt * X).dot(Xt) * Y
+        #print(linear_ap.shape)
+
+        return value, action, action_log_probs, states, linear_ap
 
     def get_value(self, inputs, states, masks):
         value, _, _ = self.base(inputs, states, masks)
