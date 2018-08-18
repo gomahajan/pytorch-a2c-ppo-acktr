@@ -204,48 +204,67 @@ data_dir="data-64"
 N = 1000
 epsilon = 0.2
 
+print("Loading Data")
 e1s = np.loadtxt("{}/e1s.csv".format(data_dir))
 e2s = np.loadtxt("{}/e2s.csv".format(data_dir))
 
+print("Building Bees")
 e2s = (e2s > epsilon).astype(int)
 e1s = (e1s > epsilon).astype(int)
 
 b1s = []
 for b in e1s:
-    b1s.append(b.dot(1 << np.arange(b.size)[::-1]))
+    b1s.append(np.array_str(b))
 
 b2s = []
 for b in e2s:
-    b2s.append(b.dot(1 << np.arange(b.size)[::-1]))
+    b2s.append(np.array_str(b))
 
 
 
 unique_e1s, counts = np.unique(e1s, axis=0, return_counts=True)
 
+#pdb.set_trace()
+print("First Graph")
 fig = plt.figure()
 x = np.arange(unique_e1s.shape[0])
 plt.bar(x, counts)
+plt.tick_params(
+    axis='x',          # changes apply to the x-axis
+    which='both',      # both major and minor ticks are affected
+    bottom=False,      # ticks along the bottom edge are off
+    top=False,         # ticks along the top edge are off)
+    labelbottom=False)
 plt.ylabel('Frequency')
-plt.xlabel('Activation Index')
-plt.title("Activations for Layer 1")
+plt.xlabel('Activation Patterns')
+plt.title("MLP-64 Hidden Layer 1")
 plt.savefig("{}/nlinear_dist1.pdf".format("data-64"), bbox_inches="tight")
 plt.show()
 
+print("Second Graph")
 unique_e2s, counts = np.unique(e2s, axis=0, return_counts=True)
 x = np.arange(unique_e2s.shape[0])
 plt.bar(x, counts)
+
+plt.tick_params(
+    axis='x',          # changes apply to the x-axis
+    which='both',      # both major and minor ticks are affected
+    bottom=False,      # ticks along the bottom edge are off
+    top=False,         # ticks along the top edge are off
+    labelbottom=False)
+
 plt.ylabel('Frequency')
-plt.xlabel('Activation Index')
-plt.title("Activations for Layer 2")
+plt.xlabel('Activation Patterns')
+plt.title("MLP-64 Hidden Layer 2")
 plt.savefig("{}/nlinear_dist2.pdf".format("data-64"), bbox_inches="tight")
 plt.show()
 
 #X = X.view(N, shape).numpy()
-X = lins
-get_tsne = False
-if get_tsne:
-    df_tsne = tsne(X,N, data_dir=data_dir)
+#X = lins
+#get_tsne = False
+#if get_tsne:
+#    df_tsne = tsne(X,N, data_dir=data_dir)
 
-df_tsne = pd.read_csv("{}/tsne.csv".format(data_dir), index_col=0)
+#df_tsne = pd.read_csv("{}/tsne.csv".format(data_dir), index_col=0)
 
 #plot(df_tsne)
