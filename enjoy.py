@@ -76,7 +76,7 @@ def generateData(filename="3-20180801-170454-gaurav-msi-64-2-", data_dir="data",
         obs = env.reset()
         update_current_obs(obs)
 
-        #time.sleep(5)
+        time.sleep(5)
 
         if args.env_name.find('Bullet') > -1:
             import pybullet as p
@@ -200,7 +200,7 @@ def plot(df_tsne):
 
 
 data_dir="data-64"
-#X, shape, N, e1s, e2s = generateData(filename="20180801-220125-gaurav-4144-64-2-", data_dir=data_dir, loading=False, N=1000, save_rate=20000)
+#X, shape, N, e1s, e2s = generateData(filename="20180801-220125-gaurav-4144-64-2-", data_dir=data_dir, loading=False, N=1000, save_rate=1)
 N = 1000
 epsilon = 0.2
 
@@ -208,9 +208,26 @@ print("Loading Data")
 e1s = np.loadtxt("{}/e1s.csv".format(data_dir))
 e2s = np.loadtxt("{}/e2s.csv".format(data_dir))
 
+#e1s = np.asarray(e1s).reshape(N,-1)
+#e2s = np.asarray(e2s).reshape(N,-1)
+
+#np.savetxt("{}/e1s.csv".format(data_dir), e1s)
+#np.savetxt("{}/e2s.csv".format(data_dir), e2s)
+
+fig = plt.figure()
+image1 = np.asarray([e1s[179], e2s[179]])
+image1 = (image1>= 1) * 1
+import matplotlib.cm as cm
+plt.imsave('{}/image1.pdf'.format(data_dir), np.array(image1).reshape(2,-1), cmap=cm.gray)
+image2 = np.asarray([e1s[180], e2s[180]])
+image2 = (image2>= 1) * 1
+plt.imsave('{}/image2.pdf'.format(data_dir), np.array(image2).reshape(2,-1), cmap=cm.gray)
+
 print("Building Bees")
 e2s = (e2s > epsilon).astype(int)
 e1s = (e1s > epsilon).astype(int)
+
+#pdb.set_trace()
 
 b1s = []
 for b in e1s:
