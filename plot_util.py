@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import medfilt
 
-matplotlib.rcParams.update({'font.size': 8})
+matplotlib.rcParams.update({'font.size': 15})
 
 
 def smooth_reward_curve(x, y):
@@ -123,9 +123,9 @@ def plot(files, bin_size=100, smooth=1, split=True):
         y = np.delete(y, [i for i in range(min_v, y.shape[1])], axis=1)
         otx = otx[:][0:min_v]
 
-    ymax = np.amax(y)
     mean = np.mean(y, axis=0)
-    sd = 0.1*np.std(y, axis=0)
+    ymax = mean[-1]
+    sd = 0.2*np.std(y, axis=0)
     cis = (mean - sd, mean + sd)
 
     return otx, mean, cis, ymax
@@ -161,6 +161,14 @@ def nlfcn64(pcn, algo, game, plt,c):
         tx, mean, cis, m = plot(infiles, smooth=1, split=False)
         plt.fill_between(tx, cis[0], cis[1], alpha=0.5, color=c)
         plt.plot(tx, mean, label="nl-FCN with 6 actors", color=c)
+        return m
+
+def nlfcnnl(pcn, algo, game, plt,c):
+    infiles = glob.glob('/home/gaurav/PycharmProjects/Atari35/base/graphs/{}/{}/'.format(algo,game)+'6*{}*64*{}-0.monitor.csv'.format(pcn, rseeds))
+    if len(infiles) > 0:
+        tx, mean, cis, m = plot(infiles, smooth=1, split=False)
+        plt.fill_between(tx, cis[0], cis[1], alpha=0.5, color=c)
+        plt.plot(tx, mean, label="nl-FCN with 6 non-linear actors using {}".format(pcn), color=c)
         return m
 
 def lfcn(algo, game, plt,c):
@@ -219,8 +227,17 @@ def nlfcn_baseline(algo, game, plt,c):
         plt.plot(tx, mean, label="baseline nlfcn policy using 6 actors 64 hidden units", color=c)
         return m
 
+def option(algo, game, plt, c):
+    infiles = glob.glob(
+            "/home/gaurav/PycharmProjects/Atari35/baselines/data/{}-*-options-.monitor.csv".format(game))
+    if len(infiles) > 0:
+        tx, mean, cis, m = plot(infiles, smooth=1, split=False)
+        plt.fill_between(tx, cis[0], cis[1], alpha=0.5, color=c)
+        plt.plot(tx, mean, label="Option-Critic with 3 actors", color=c)
+        return m
+
 if __name__ == "__main__":
-    games = ["HalfCheetah-v2", "Hopper-v2", "Humanoid-v2", "InvertedDoublePendulum-v2", "InvertedPendulum-v2","Swimmer-v2","Walker2d-v2"]
+    games = ["Hopper-v2"]
     for game in games:
         algo = "ppo"
 
@@ -228,7 +245,7 @@ if __name__ == "__main__":
         f1 = plt.figure()
         tick_fractions = np.array([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
         ticks = tick_fractions * num_steps
-        tick_names = ["{:.1e}".format(tick) for tick in ticks]
+        tick_names = ["0.0", "0.4", "0.8", "1.2" , "1.6", "2.0"]
 
         pc = "*"
         rseeds = "*"
@@ -238,16 +255,24 @@ if __name__ == "__main__":
         print("Linear: {}".format(m))
         m = lfcn(algo, game, plt, color_defaults[1])
         print("LFCN: {}".format(m))
-        #m = nlfcn64("msi",algo, game, plt,color_defaults[2])
+        m = nlfcn64("msi",algo, game, plt,color_defaults[2])
+        print("nl-fcn: {}".format(m))
+        #m = nlfcnnl("hilbert", algo, game, plt, color_defaults[9])
+        #print("nl-fcn: {}".format(m))
+        #m = nlfcnnl("4144", algo, game, plt, color_defaults[7])
+        #print("nl-fcn: {}".format(m))
+        #m = nlfcnnl("msi", algo, game, plt, color_defaults[8])
         #print("nl-fcn: {}".format(m))
         #m = scn16(algo,game,plt,color_defaults[3])
         #print("scn16: {}".format(m))
         #m = scn(algo,game,plt,color_defaults[4])
         #print("scn64: {}".format(m))
-        m = nlinear16(algo,game,plt,color_defaults[5])
-        print("MLP-16: {}".format(m))
-        m = nlinear64(algo, game, plt,color_defaults[6])
-        print("MLP-64: {}".format(m))
+        m = option(algo,game,plt, color_defaults[5])
+        print("option: {}".format(m))
+        #m = nlinear16(algo,game,plt,color_defaults[5])
+        #print("MLP-16: {}".format(m))
+        #m = nlinear64(algo, game, plt,color_defaults[6])
+        #print("MLP-64: {}".format(m))
 
         plt.xticks(ticks, tick_names)
         plt.xlim(0, num_steps * 1.01)
@@ -255,5 +280,6 @@ if __name__ == "__main__":
         plt.ylabel('Rewards')
         plt.title(game)
         plt.legend(loc=4)
-        #plt.savefig("images/{}-linear.pdf".format(game))
+        #plt.savefig("images/{}.pdf".format(game), bbox_inches="tight")
+        plt.show()
         print("Done printing for {}".format(game))
