@@ -1,7 +1,10 @@
 import argparse
 import os
 import types
+import matplotlib
 import matplotlib.pyplot as plt
+matplotlib.rcParams.update({'font.size': 15})
+
 
 import numpy as np
 import torch
@@ -177,7 +180,7 @@ def tsne(X,y,N, data_dir="data", n_actors=3):
 def plot(df_tsne,data_dir, n_actors=3):
     # Create the figure
     fig = plt.figure( figsize=(8,8) )
-    ax = fig.add_subplot(1, 1, 1, title='nl-FCN-3' )
+    ax = fig.add_subplot(1, 1, 1, title='nl-FCN' )
     # Create the scatter
     colors = [
     '#1f77b4',  # muted blue
@@ -198,17 +201,17 @@ def plot(df_tsne,data_dir, n_actors=3):
             y=df_tsne.loc[df_tsne['label'] == float(i)]['y-tsne'],
             c=colors[i],
             cmap=plt.cm.get_cmap('Paired'),
-            alpha=0.15,
+            alpha=0.5,
             label="Actor {}".format(i))
 
     plt.legend()
-    #plt.savefig("{}/nl-fcn-3.pdf".format(data_dir))
-    plt.show()
+    plt.savefig("{}/nl-fcn-3.png".format(data_dir), bbox_inches="tight")
+    #plt.show()
 
 
-data_dir="data_6_64"
+data_dir="data_3_64"
 files= ["6-20180731-211910-gaurav-msi-64-2-","3-20180801-170454-gaurav-msi-64-2-"]
-X, y, shape, N = generateData(filename=files[0], data_dir=data_dir, loading=True, N=1000, save_rate=1)
+X, y, shape, N = generateData(filename=files[1], data_dir=data_dir, loading=True, N=1000, save_rate=1)
 X = X.view(N, shape).numpy()
 y = y.view(N).numpy()
 get_tsne = False
