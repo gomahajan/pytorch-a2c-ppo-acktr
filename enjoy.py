@@ -180,7 +180,7 @@ def tsne(X,y,N, data_dir="data", n_actors=3):
 def plot(df_tsne,data_dir, n_actors=3):
     # Create the figure
     fig = plt.figure( figsize=(8,8) )
-    ax = fig.add_subplot(1, 1, 1, title='nl-FCN' )
+    ax = fig.add_subplot(1, 1, 1, title='Option Critic' )
     # Create the scatter
     colors = [
     '#1f77b4',  # muted blue
@@ -205,16 +205,24 @@ def plot(df_tsne,data_dir, n_actors=3):
             label="Actor {}".format(i))
 
     plt.legend()
-    plt.savefig("{}/nl-fcn-3.png".format(data_dir), bbox_inches="tight")
-    #plt.show()
+    plt.savefig("{}/option_920.pdf".format(data_dir), bbox_inches="tight")
+    plt.show()
 
 
-data_dir="data_3_64"
-files= ["6-20180731-211910-gaurav-msi-64-2-","3-20180801-170454-gaurav-msi-64-2-"]
-X, y, shape, N = generateData(filename=files[1], data_dir=data_dir, loading=True, N=1000, save_rate=1)
-X = X.view(N, shape).numpy()
-y = y.view(N).numpy()
-get_tsne = False
+data_dir="data_options"
+#files= ["6-20180731-211910-gaurav-msi-64-2-","3-20180801-170454-gaurav-msi-64-2-"]
+#X, y, shape, N = generateData(filename=files[1], data_dir=data_dir, loading=True, N=1000, save_rate=1)
+N = 2048
+X = np.genfromtxt("/home/gaurav/PycharmProjects/Atari35/baselines/hopper/data/2-temp-observation.csv", delimiter=',')
+y = np.genfromtxt("/home/gaurav/PycharmProjects/Atari35/baselines/hopper/data/2-temp-options.csv", delimiter=',')
+print(X[0])
+X = X.reshape(N, 11)
+y = y.reshape(N)
+
+N = 1000
+X = X[:N,:]
+y = y[:N]
+get_tsne = True
 if get_tsne:
     df_tsne = tsne(X,y,N, data_dir=data_dir)
 
