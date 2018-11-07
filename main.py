@@ -1,3 +1,4 @@
+# export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libGLEW.so before running mujoco
 import copy
 import glob
 import os
@@ -20,6 +21,7 @@ from storage import RolloutStorage
 from visualize import visdom_plot
 
 import algo
+import socket
 
 args = get_args()
 
@@ -38,9 +40,14 @@ try:
     os.makedirs(args.log_dir)
 except OSError:
     files = glob.glob(os.path.join(args.log_dir, '*.monitor.csv'))
-    for f in files:
-        os.remove(f)
+    print("#######")
+    print("WARNING: Deleting all files")
+    print("#######")
+    #for f in files:
+    #   os.remove(f)
 
+fileNameSuffix = "{}-{}-{}-{}-{}-".format(args.num_actors, time.strftime("%Y%m%d-%H%M%S"), socket.gethostname(), args.hidden_size, args.uid)
+args.log_dir = args.log_dir + fileNameSuffix
 
 def main():
     print("#######")
@@ -68,7 +75,7 @@ def main():
     obs_shape = envs.observation_space.shape
     obs_shape = (obs_shape[0] * args.num_stack, *obs_shape[1:])
 
-    actor_critic = Policy(obs_shape, envs.action_space, args.recurrent_policy)
+    actor_critic = Policy(obs_shape, envs.action_space, args.recurrent_policy, args.num_actors, args.hidden_size)
 
     if envs.action_space.__class__.__name__ == "Discrete":
         action_shape = 1
@@ -120,7 +127,7 @@ def main():
         for step in range(args.num_steps):
             # Sample actions
             with torch.no_grad():
-                value, action, action_log_prob, states = actor_critic.act(
+                value, action, choice, action_log_prob, choice_log_prob, states = actor_critic.act(
                         rollouts.observations[step],
                         rollouts.states[step],
                         rollouts.masks[step])
@@ -146,7 +153,7 @@ def main():
                 current_obs *= masks
 
             update_current_obs(obs)
-            rollouts.insert(current_obs, states, action, action_log_prob, value, reward, masks)
+            rollouts.insert(current_obs, states, action, choice, action_log_prob, choice_log_prob, value, reward, masks)
 
         with torch.no_grad():
             next_value = actor_critic.get_value(rollouts.observations[-1],
@@ -160,7 +167,7 @@ def main():
         rollouts.after_update()
 
         if j % args.save_interval == 0 and args.save_dir != "":
-            save_path = os.path.join(args.save_dir, args.algo)
+            save_path = os.path.join(os.path.join(args.save_dir, args.algo), args.env_name)
             try:
                 os.makedirs(save_path)
             except OSError:
@@ -174,7 +181,7 @@ def main():
             save_model = [save_model,
                             hasattr(envs, 'ob_rms') and envs.ob_rms or None]
 
-            torch.save(save_model, os.path.join(save_path, args.env_name + ".pt"))
+            torch.save(save_model, os.path.join(save_path, fileNameSuffix + ".pt"))
 
         if j % args.log_interval == 0:
             end = time.time()

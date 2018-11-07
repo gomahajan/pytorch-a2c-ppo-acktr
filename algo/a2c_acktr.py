@@ -35,24 +35,26 @@ class A2C_ACKTR(object):
         action_shape = rollouts.actions.size()[-1]
         num_steps, num_processes, _ = rollouts.rewards.size()
 
-        values, action_log_probs, dist_entropy, states = self.actor_critic.evaluate_actions(
+        values, action_log_probs, choice_log_probs, dist_entropy, states = self.actor_critic.evaluate_actions(
             rollouts.observations[:-1].view(-1, *obs_shape),
             rollouts.states[0].view(-1, self.actor_critic.state_size),
             rollouts.masks[:-1].view(-1, 1),
-            rollouts.actions.view(-1, action_shape))
+            rollouts.actions.view(-1, action_shape),
+            rollouts.choices.view(-1, 1))
 
         values = values.view(num_steps, num_processes, 1)
         action_log_probs = action_log_probs.view(num_steps, num_processes, 1)
+        choice_log_probs = choice_log_probs.view(num_steps, num_processes, 1)
 
         advantages = rollouts.returns[:-1] - values
         value_loss = advantages.pow(2).mean()
 
-        action_loss = -(advantages.detach() * action_log_probs).mean()
+        action_loss = -(advantages.detach() * (action_log_probs + choice_log_probs)).mean()
 
         if self.acktr and self.optimizer.steps % self.optimizer.Ts == 0:
             # Sampled fisher, see Martens 2014
             self.actor_critic.zero_grad()
-            pg_fisher_loss = -action_log_probs.mean()
+            pg_fisher_loss = -(action_log_probs + choice_log_probs).mean()
 
             value_noise = torch.randn(values.size())
             if values.is_cuda:

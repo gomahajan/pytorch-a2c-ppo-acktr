@@ -3,6 +3,25 @@
 ## Update 10/06/2017: added enjoy.py and a link to pretrained models!
 ## Update 09/27/2017: now supports both Atari and MuJoCo/Roboschool!
 
+```bash
+# To fix errors
+export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libGLEW.so
+
+# Learn
+python main.py --env-name "Walker2d-v2" --algo ppo --use-gae --vis-interval 1  --log-interval 1 --num-stack 1 --num-steps 2048 --num-processes 1 --lr 3e-4 --entropy-coef 0 --value-loss-coef 1 --ppo-epoch 10 --num-mini-batch 32 --gamma 0.99 --tau 0.95 --num-frames 2000000
+
+# Replay stored policy
+optirun python enjoy.py --load-dir trained_models/ppo --env-name "Walker2d-v2" --num-stack 1
+
+# Baselines for Atari preprocessing
+git clone https://github.com/openai/baselines.git
+cd baselines
+pip install -e .
+
+# Other requirements
+pip install -r requirements.txt
+```
+
 This is a PyTorch implementation of
 * Advantage Actor Critic (A2C), a synchronous deterministic version of [A3C](https://arxiv.org/pdf/1602.01783v1.pdf)
 * Proximal Policy Optimization [PPO](https://arxiv.org/pdf/1707.06347.pdf)
